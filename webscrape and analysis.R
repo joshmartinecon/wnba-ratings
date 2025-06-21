@@ -203,7 +203,7 @@ z <- z[order(-z$rating_star),]
 
 ##### save work #####
 
-setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings/Data")
+setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
 y[,3:6] <- apply(y[,3:6], 2, round)
 # write.csv(y, "WNBA_Ratings_and_Rotations.csv", row.names = F)
 # write.csv(z, "WNBA_Team_Ratings.csv", row.names = F)

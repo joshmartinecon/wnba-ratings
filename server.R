@@ -3,7 +3,7 @@ library(DT)
 library(dplyr)
 
 ##### Load Data #####
-setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings/Data")
+# setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
 players <- read.csv("WNBA_Ratings_and_Rotations.csv", stringsAsFactors = FALSE)
 team_ratings <- read.csv("WNBA_Team_Ratings.csv", stringsAsFactors = FALSE)
 last_updated <- readRDS("last_updated.RDS")
@@ -58,7 +58,7 @@ server <- function(input, output, session) {
         Rating      = rating,
         `MPG`       = mp_g,
         `MPG*`      = mp_g_star,
-        `Δ Minutes` = min_symbol
+        `NB Minutes` = min_symbol
       ) %>%
       arrange(desc(`MPG*`)) %>%
       datatable(

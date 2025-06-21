@@ -5,6 +5,6 @@ account: joshua-c-martin
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 14971562
-bundleId: 10496620
+bundleId: 10496649
 url: https://joshua-c-martin.shinyapps.io/wnba-ratings/
 version: 1
