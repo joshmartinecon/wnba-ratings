@@ -6,6 +6,7 @@ library(dplyr)
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings/Data")
 players <- read.csv("WNBA_Ratings_and_Rotations.csv", stringsAsFactors = FALSE)
 team_ratings <- read.csv("WNBA_Team_Ratings.csv", stringsAsFactors = FALSE)
+last_updated <- readRDS("last_updated.RDS")
 
 ##### SERVER #####
 server <- function(input, output, session) {
