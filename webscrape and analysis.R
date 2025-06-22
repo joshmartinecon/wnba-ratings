@@ -1,7 +1,8 @@
 
 library(rvest)
+library(dplyr)
 
-### clear data enviornment
+### clear data environment
 # rm(list=ls())
 
 ### Negate funciton
@@ -67,7 +68,7 @@ z <- as.data.frame(do.call(rbind, z))
 y <- y[paste(y$link, y$team) %in% paste(z$id, z$team),]
 
 ## remove players with little data
-y <- subset(y, y$mp >= 40)
+y <- subset(y, as.numeric(y$mp) >= 40)
 
 ### create measure of minutes played per game, scale by team
 y[,4:8] <- lapply(y[,4:8], as.numeric)
