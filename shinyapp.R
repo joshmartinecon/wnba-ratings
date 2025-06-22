@@ -4,9 +4,10 @@ library(dplyr)
 
 ##### Load Data #####
 # setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
-players <- read.csv("WNBA_Ratings_and_Rotations.csv", stringsAsFactors = FALSE)
-team_ratings <- read.csv("WNBA_Team_Ratings.csv", stringsAsFactors = FALSE)
-last_updated <- readRDS("last_updated.RDS")
+players <- read.csv("https://raw.githubusercontent.com/joshmartinecon/wnba-ratings/refs/heads/main/WNBA_Ratings_and_Rotations.csv", stringsAsFactors = FALSE)
+team_ratings <- read.csv("https://raw.githubusercontent.com/joshmartinecon/wnba-ratings/refs/heads/main/WNBA_Team_Ratings.csv", stringsAsFactors = FALSE)
+last_updated <- read.csv("https://raw.githubusercontent.com/joshmartinecon/wnba-ratings/refs/heads/main/last_updated.csv")
+last_updated <- do.call(cbind, strsplit(last_updated[1,2], " "))[1]
 
 ##### UI #####
 ui <- navbarPage(
@@ -25,7 +26,7 @@ ui <- navbarPage(
         column(3,
                wellPanel(
                  tags$div("Created by ", tags$a("Josh Martin", href = "https://joshmartinecon.github.io/")),
-                 tags$div(paste("Updated:", format(last_updated, "%Y-%m-%d %H:%M:%S"))),
+                 tags$div(paste("Updated:", last_updated)),
                  tags$div(tags$a("Source Code & Data", href = "https://github.com/joshmartinecon/wnba-ratings")),
                  tags$div("+ = injured",)
                ),
@@ -50,7 +51,7 @@ ui <- navbarPage(
         column(3, wellPanel(
           tags$div("Created by ",
                    tags$a("Josh Martin", href = "https://joshmartinecon.github.io/")),
-          tags$div(paste("Updated:", format(last_updated, "%Y-%m-%d %H:%M:%S"))),
+          tags$div(paste("Updated:", last_updated)),
           tags$div(tags$a("Source Code & Data", href = "https://github.com/joshmartinecon/wnba-ratings")),
           tags$div("+ = injured, * = optimal")
         )),
@@ -68,7 +69,7 @@ ui <- navbarPage(
                wellPanel(
                  tags$div("Created by ",
                           tags$a("Josh Martin", href = "https://joshmartinecon.github.io/")),
-                 tags$div(paste("Updated:", format(last_updated, "%Y-%m-%d %H:%M:%S"))),
+                 tags$div(paste("Updated:", last_updated)),
                  tags$div(tags$a("Source Code & Data", href = "https://github.com/joshmartinecon/wnba-ratings")),
                  tags$div("+ = injured, * = optimal",)
                ),

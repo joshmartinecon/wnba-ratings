@@ -32,9 +32,9 @@ To filter out players with insufficient sample sizes, only those with at least 4
 To standardize team playing time (given that players miss some games), each team’s total minutes are adjusted so that the sum of per-player minutes equals exactly 200 (5 players × 40 minutes):
 
 $$
-\textstyle \text{Adj}_k=\frac{\sum_{i\in k}\frac{MP_i}{G_i}}{40\times5}
+\text{Adj}_k=\frac{\sum_{i\in k}\frac{MP_i}{G_i}}{40\times5}
 \quad\Rightarrow\quad
-\textstyle MPG_i=\frac{MP_i/G_i}{\text{Adj}_k}
+MPG_i=\frac{MP_i/G_i}{\text{Adj}_k}
 $$
 
 ### Productivity Score
@@ -86,8 +86,9 @@ Injury status is pulled from ESPN’s WNBA injury tracker. Players listed as “
 Player productivity scores \( s_i \) are transformed onto a 60–100 scale using an inverse hyperbolic sine transformation to emphasize differentiation while compressing extreme outliers:
 
 $$
-\textstyle Rating_i = 60 + \frac{\operatorname{asinh}(s_i) - \min \operatorname{asinh}(s)}{\max \operatorname{asinh}(s) - \min \operatorname{asinh}(s)} \times 40
+\text{Rating}_i = 60 + \frac{\text{asinh}(s_i) - \min(\text{asinh}(s))}{\max(\text{asinh}(s)) - \min(\text{asinh}(s))} \times 40
 $$
+
 
 ### Team Ratings
 
