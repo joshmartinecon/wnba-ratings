@@ -157,7 +157,7 @@ for(i in teamz){
     z$mp_g_star[!rulez] <- z$mp_g_star[!rulez] + 
       z$mp_g_star[!rulez] / sum(z$mp_g_star[!rulez]) * xtra
     
-    rulez <- z$mp_g_star > max(y$mp_g)
+    rulez <- round(z$mp_g_star, 2) > max(round(y$mp_g, 2))
   }
   
   # store team
