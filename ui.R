@@ -11,78 +11,70 @@ last_updated <- do.call(cbind, strsplit(last_updated[1,2], " "))[1]
 
 ##### UI #####
 ui <- navbarPage(
-  title    = div("WNBA Explorer", style = "margin-left:15px;"),
+  title = div("WNBA Explorer", style = "margin-left:15px;"),
   selected = "All Players",
   
   header = tags$head(
-    tags$style(HTML("\n      /* Arrow styling for Δ Minutes */\n      .arrow-zero   { color: gray;        font-weight: bold; font-size: 18px; }\n      .arrow-up-1   { color: forestgreen; font-weight: bold; font-size: 18px; }\n      .arrow-up-2   { color: forestgreen; font-weight: bold; font-size: 18px; }\n      .arrow-up-3   { color: forestgreen; font-weight: bold; font-size: 18px; }\n      .arrow-down-1 { color: crimson;     font-weight: bold; font-size: 18px; }\n      .arrow-down-2 { color: crimson;     font-weight: bold; font-size: 18px; }\n      .arrow-down-3 { color: crimson;     font-weight: bold; font-size: 18px; }\n    "))
+    tags$style(HTML("
+      .arrow-zero   { color: gray;        font-weight: bold; font-size: 18px; }
+      .arrow-up-1   { color: forestgreen; font-weight: bold; font-size: 18px; }
+      .arrow-up-2   { color: forestgreen; font-weight: bold; font-size: 18px; }
+      .arrow-up-3   { color: forestgreen; font-weight: bold; font-size: 18px; }
+      .arrow-down-1 { color: crimson;     font-weight: bold; font-size: 18px; }
+      .arrow-down-2 { color: crimson;     font-weight: bold; font-size: 18px; }
+      .arrow-down-3 { color: crimson;     font-weight: bold; font-size: 18px; }
+    "))
   ),
   
-  # ── All Players (default tab) ───────────────────────────────────
-  tabPanel(
-    "All Players",
-    fluidPage(
-      fluidRow(
-        column(3,
-               wellPanel(
+  tabPanel("All Players",
+           fluidPage(
+             fluidRow(
+               column(3,
+                      wellPanel(
+                        tags$div("Created by ", tags$a("Josh Martin", href = "https://joshmartinecon.github.io/")),
+                        tags$div(paste("Updated:", last_updated)),
+                        tags$div(tags$a("Source Code & Data", href = "https://github.com/joshmartinecon/wnba-ratings")),
+                        tags$div("+ = injured")
+                      ),
+                      wellPanel(
+                        selectInput("team_filter", "Select Team:", choices = c("All", sort(unique(players$team))), selected = "All")
+                      )
+               ),
+               column(6, div(style = "max-width: 800px;", DTOutput("all_table")))
+             )
+           )
+  ),
+  
+  tabPanel("Team Ratings",
+           fluidPage(
+             fluidRow(
+               column(3, wellPanel(
                  tags$div("Created by ", tags$a("Josh Martin", href = "https://joshmartinecon.github.io/")),
                  tags$div(paste("Updated:", last_updated)),
                  tags$div(tags$a("Source Code & Data", href = "https://github.com/joshmartinecon/wnba-ratings")),
-                 tags$div("+ = injured",)
-               ),
-               wellPanel(
-                 selectInput(
-                   "team_filter", "Select Team:",
-                   choices  = c("All", sort(unique(players$team))),
-                   selected = "All"
-                 )
-               )
-        ),
-        column(6, div(style = "max-width: 800px;", DTOutput("all_table")))
-      )
-    )
+                 tags$div("+ = injured")
+               )),
+               column(6, div(style = "max-width: 800px;", DTOutput("ratings_table")))
+             )
+           )
   ),
   
-  # ── Team Ratings ────────────────────────────────────────────────
-  tabPanel(
-    "Team Ratings",
-    fluidPage(
-      fluidRow(
-        column(3, wellPanel(
-          tags$div("Created by ",
-                   tags$a("Josh Martin", href = "https://joshmartinecon.github.io/")),
-          tags$div(paste("Updated:", last_updated)),
-          tags$div(tags$a("Source Code & Data", href = "https://github.com/joshmartinecon/wnba-ratings")),
-          tags$div("+ = injured, * = optimal")
-        )),
-        column(6, div(style = "max-width: 800px;", DTOutput("ratings_table")))
-      )
-    )
-  ),
-  
-  # ── Team Rotations ──────────────────────────────────────────────
-  tabPanel(
-    "Team Rotations",
-    fluidPage(
-      fluidRow(
-        column(3,
-               wellPanel(
-                 tags$div("Created by ",
-                          tags$a("Josh Martin", href = "https://joshmartinecon.github.io/")),
-                 tags$div(paste("Updated:", last_updated)),
-                 tags$div(tags$a("Source Code & Data", href = "https://github.com/joshmartinecon/wnba-ratings")),
-                 tags$div("+ = injured, * = optimal",)
+  tabPanel("Team Rotations",
+           fluidPage(
+             fluidRow(
+               column(3,
+                      wellPanel(
+                        tags$div("Created by ", tags$a("Josh Martin", href = "https://joshmartinecon.github.io/")),
+                        tags$div(paste("Updated:", last_updated)),
+                        tags$div(tags$a("Source Code & Data", href = "https://github.com/joshmartinecon/wnba-ratings")),
+                        tags$div("+ = injured")
+                      ),
+                      wellPanel(
+                        selectInput("team_select", "Select Team:", choices = c("ATL","CHI","CON","DAL","GSV","IND","LAS","LVA","MIN","NYL","PHO","SEA","WAS"), selected = "ATL")
+                      )
                ),
-               wellPanel(
-                 selectInput(
-                   "team_select", "Select Team:",
-                   choices  = c("ATL","CHI","CON","DAL","GSV","IND","LAS","LVA","MIN","NYL","PHO","SEA","WAS"),
-                   selected = "ATL"
-                 )
-               )
-        ),
-        column(6, DTOutput("team_table"))
-      )
-    )
+               column(6, DTOutput("team_table"))
+             )
+           )
   )
 )

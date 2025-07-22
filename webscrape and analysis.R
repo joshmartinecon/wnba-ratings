@@ -161,9 +161,46 @@ for(i in teamz){
   }
   
   # store team
+  z$all <- 0
   x[[length(x)+1]] <- z
+  
+  ### include injured players for full team stength calculation
+  # filter by team
+  z <- y[y$team == i,]
+  
+  # expected minutes
+  minz <- (-1*b + sqrt(b^2 - 4*c*(a - z$score))) / (2*c)
+  
+  # lower and upper bounds on minutes
+  minz <- ifelse(is.na(minz), min(y$mp_g), minz)
+  minz <- pmin(pmax(minz, min(y$mp_g)), max(y$mp_g))
+  
+  # sums to 200 (5 players, 40 mins)
+  z$mp_g_star <- minz / sum(minz) * 200
+  
+  # can't play more than some amount
+  rulez <- z$mp_g_star > max(y$mp_g)
+  
+  # reallocate playing time if rule-breaker
+  while(TRUE %in% rulez){
+    xtra <- sum(z$mp_g_star[rulez] - max(y$mp_g))
+    
+    z$mp_g_star <- ifelse(rulez, max(y$mp_g), z$mp_g_star)
+    
+    z$mp_g_star[!rulez] <- z$mp_g_star[!rulez] + 
+      z$mp_g_star[!rulez] / sum(z$mp_g_star[!rulez]) * xtra
+    
+    rulez <- round(z$mp_g_star, 2) > max(round(y$mp_g, 2))
+  }
+  
+  # store team
+  z$all <- 1
+  x[[length(x)+1]] <- z
+  
 }
 x <- as.data.frame(do.call(rbind, x))
+y1 <- x[x$all == 1,]
+x <- x[x$all == 0, 1:15]
 
 ## difference between optimal and current playing time
 x$min_diff <- x$mp_g_star - x$mp_g
@@ -193,14 +230,20 @@ z$rating <- z[,2] / z[,3]
 z_star <- aggregate(cbind(rating*mp_g_star, mp_g_star) ~ team, y, sum)
 z_star$rating <- z_star[,2] / z_star[,3]
 
+## optimal playing-time weighted team rating
+z_full <- aggregate(cbind(rating*mp_g_star, mp_g_star) ~ team, y1, sum)
+z_full$rating <- z_full[,2] / z_full[,3]
+
 ### simplify data
 z <- data.frame(
   team = z$team,
   rating = round(z$rating, 1),
-  rating_star = round(z_star$rating, 1)
+  strength = round(z_full$rating, 1),
+  rotation_rating = round(z$rating - z_star$rating, 1)
 )
+
 ## sory by rating
-z <- z[order(-z$rating_star),]
+z <- z[order(-z$rating),]
 
 ##### save work #####
 

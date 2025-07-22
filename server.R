@@ -12,83 +12,72 @@ last_updated <- do.call(cbind, strsplit(last_updated[1,2], " "))[1]
 ##### SERVER #####
 server <- function(input, output, session) {
   
-  # Reactive player data with ranking -------------------------------------------
   ranked_players <- reactive({
     players %>%
       arrange(desc(rating)) %>%
       mutate(Rank = row_number())
   })
   
-  # 1) All Players ---------------------------------------------------------------
   output$all_table <- renderDT({
     df <- ranked_players()
     if (input$team_filter != "All") {
       df <- df %>% filter(team == input$team_filter)
     }
-    
     df %>%
       select(Rank, Player = player, Team = team, Rating = rating) %>%
       datatable(
         colnames = c("", "Player", "Team", "Rating"),
-        options = list(
-          paging       = FALSE,
-          autoWidth    = TRUE,
-          lengthChange = FALSE,
-          info = FALSE
-        ),
-        width    = "100%",
+        options = list(paging = FALSE, autoWidth = TRUE, lengthChange = FALSE, info = FALSE),
+        width = "100%",
         rownames = FALSE
       )
   })
   
-  # 2) Team Rotations ------------------------------------------------------------
-  output$team_table <- renderDT({
-    players %>%
-      filter(team == input$team_select) %>%
-      mutate(min_symbol = case_when(
-        min_diff >= 15  ~ "<span class='arrow-up-3'>&uarr;&uarr;&uarr;</span>",
-        min_diff >= 10  ~ "<span class='arrow-up-2'>&uarr;&uarr;</span>",
-        min_diff >= 5   ~ "<span class='arrow-up-1'>&uarr;</span>",
-        min_diff <= -15 ~ "<span class='arrow-down-3'>&darr;&darr;&darr;</span>",
-        min_diff <= -10 ~ "<span class='arrow-down-2'>&darr;&darr;</span>",
-        min_diff <= -5  ~ "<span class='arrow-down-1'>&darr;</span>",
-        TRUE            ~ "<span class='arrow-zero'>&ndash;</span>"
-      )) %>%
-      select(
-        Player      = player,
-        Rating      = rating,
-        `MPG`       = mp_g,
-        `MPG*`      = mp_g_star,
-        `NB Minutes` = min_symbol
-      ) %>%
-      arrange(desc(`MPG*`)) %>%
-      datatable(
-        options = list(
-          pageLength   = 15,
-          autoWidth    = TRUE,
-          lengthChange = FALSE,
-          info = FALSE
-        ),
-        escape   = FALSE,
-        width    = "100%",
-        rownames = FALSE
-      )
-  })
-  
-  # 3) Team Ratings --------------------------------------------------------------
   output$ratings_table <- renderDT({
     team_ratings %>%
       arrange(desc(rating)) %>%
-      select(Team = team, Rating = rating, 'Rating*' = rating_star) %>%
+      select(
+        Team            = team,
+        `Current Rating` = rating,
+        `Full Strength`  = strength,
+        Rotation         = rotation_rating
+      ) %>%
       datatable(
-        options = list(
-          pageLength   = 15,
-          autoWidth    = TRUE,
-          lengthChange = FALSE,
-          info = FALSE
-        ),
-        width    = "100%",
+        options = list(paging = FALSE, autoWidth = TRUE, lengthChange = FALSE, info = FALSE),
+        width = "100%",
         rownames = FALSE
       )
+  })
+  
+  output$team_table <- renderDT({
+    df <- players %>% 
+      filter(team == input$team_select) %>%
+      arrange(desc(rating)) %>%
+      mutate(
+        delta = case_when(
+          min_diff >= 15  ~ "<span style='color:forestgreen;'>&#8593;&#8593;&#8593;</span>",  # ↑↑↑
+          min_diff >= 10  ~ "<span style='color:forestgreen;'>&#8593;&#8593;</span>",         # ↑↑
+          min_diff >  5   ~ "<span style='color:forestgreen;'>&#8593;</span>",                # ↑
+          min_diff <= -15 ~ "<span style='color:crimson;'>&#8595;&#8595;&#8595;</span>",      # ↓↓↓
+          min_diff <= -10 ~ "<span style='color:crimson;'>&#8595;&#8595;</span>",             # ↓↓
+          min_diff <  -5  ~ "<span style='color:crimson;'>&#8595;</span>",                    # ↓
+          TRUE            ~ "<span style='color:gray;'>-</span>"
+        )
+      ) %>%
+      select(
+        Player = player,
+        `MP/G` = mp_g,
+        `Target MP/G` = mp_g_star,
+        `Δ Minutes` = delta,
+        Rating = rating
+      )
+    
+    datatable(
+      df, 
+      escape = FALSE,
+      options = list(paging = FALSE, autoWidth = TRUE, lengthChange = FALSE, info = FALSE),
+      width = "100%",
+      rownames = FALSE
+    )
   })
 }
