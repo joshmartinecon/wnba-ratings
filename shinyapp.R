@@ -109,13 +109,18 @@ server <- function(input, output, session) {
     team_ratings %>%
       arrange(desc(rating)) %>%
       select(
-        Team            = team,
+        Team             = team,
         `Current Rating` = rating,
         `Full Strength`  = strength,
         Rotation         = rotation_rating
       ) %>%
-      datatable(
-        options = list(paging = FALSE, autoWidth = TRUE, lengthChange = FALSE, info = FALSE),
+      DT::datatable(
+        options = list(
+          paging = FALSE,
+          autoWidth = TRUE,
+          lengthChange = FALSE,
+          info = FALSE
+        ),
         width = "100%",
         rownames = FALSE
       )
@@ -140,7 +145,7 @@ server <- function(input, output, session) {
         Player = player,
         `MP/G` = mp_g,
         `Target MP/G` = mp_g_star,
-        `Δ Minutes` = delta,
+        `Minutes Change` = delta,
         Rating = rating
       )
     
