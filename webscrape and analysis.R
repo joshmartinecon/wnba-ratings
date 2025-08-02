@@ -12,7 +12,7 @@ library(dplyr)
 teams <- c("atl", "chi", "conn", "dal", "gs", "ind", "lv", "la", "min", "ny", "phx", "sea", "wsh")
 y <- list()
 
-### loop
+### scrape the urls for each team's schedule
 for(i in teams){
   
   ### start
@@ -295,6 +295,7 @@ r <- r[order(-r$rating),]
 ### add back in injured players
 z <- y[y$link %ni% x$link,]
 z$mp_g_team <- z$mp_g_star <- 0
+z$player <- paste0(z$player, "+")
 x <- rbind(x, z)
 x <- data.frame(
   player = x$player,
