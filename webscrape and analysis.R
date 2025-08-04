@@ -1,6 +1,7 @@
 
 library(rvest)
 library(dplyr)
+library(stringr)
 
 ### clear data environment
 # rm(list=ls())
@@ -25,6 +26,11 @@ for(i in teams){
   z <- z[c(-1:-2),]
   z <- z[1:((1:nrow(z))[grepl("Regular|Cup", z[,1])]-1),]
   
+  z$DATE %>%
+    str_remove("^[A-Za-z]{3},\\s*") %>%       # Remove "Fri," etc.
+    paste("2025") %>%                         # Add year
+    as.Date(format = "%B %d %Y") -> z$DATE  
+  
   ### links
   x %>%
     html_elements("a") %>%
@@ -38,20 +44,43 @@ for(i in teams){
   a <- gsub("game/_/", "boxscore/_/", b)
   a <- sub("/[^/]*$", "", a)
   
-  y[[length(y)+1]] <- a[1:nrow(z)]
+  ### save
+  y[[length(y)+1]] <- data.frame(
+    date = z$DATE,
+    link = a[1:nrow(z)]
+  )
   
+  ### rest
   Sys.sleep(5)
 }
 
-### game scrape
-a <- unique(unlist(y))
-b <- list()
+### compile and save data
+x <- as.data.frame(do.call(rbind, y))
+x <- x[!duplicated(x),]
+x <- x[order(x$date),]
+setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
+write.csv(x, "game links.csv", row.names = F)
 
+### game scrape
+y <- read.csv("minutes played.csv")
+a <- x$link[x$date > max(y$date)]
+b <- list()
 for(i in 1:length(a)){
   
   ### start
-  y <- read_html(a[i]) %>% 
-    html_table()
+  x <- read_html(a[i])
+  
+  ### table
+  x %>%
+    html_table() -> y
+  
+  ### date
+  x %>%
+    html_element("div.n8.GameInfo__Meta span") %>%
+    html_text() %>%
+    str_extract("(?<=, ).*") %>%                    
+    str_trim() %>%
+    as.Date(., format = "%B %d, %Y") -> dt
   
   ### team 1
   x <- cbind(as.data.frame(y[2]), as.data.frame(y[3]))
@@ -76,13 +105,22 @@ for(i in 1:length(a)){
   z <- z[!grepl("bench|team", z$player) & z$player != "" & !grepl("DNP", z$mp),]
   
   ### combine
-  b[[length(b)+1]] <- rbind(x, z)
+  b[[length(b)+1]] <- cbind(rbind(x, z), date = dt)
   Sys.sleep(5)
   cat(round(i/length(a), 2), "\r")
 }
 
-### compile and clean data
+### compile and clean save data
 y <- as.data.frame(do.call(rbind, b))
+x <- read.csv("minutes played.csv")
+y <- rbind(x, y)
+
+ot2 <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 45])
+ot <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 40])
+ot <- ot[ot %ni% ot2]
+y$mp[paste(y$team, y$date) %in% ot] <- round(y$mp[paste(y$team, y$date) %in% ot] * (40/45))
+y$mp[paste(y$team, y$date) %in% ot2] <- round(y$mp[paste(y$team, y$date) %in% ot2] * (40/50))
+write.csv(y, "minutes played.csv")
 
 z <- as.data.frame(table(paste(y$player, y$team)))
 x <- aggregate(as.numeric(mp) ~ player + team, y, sum)
@@ -109,6 +147,7 @@ x$player[x$player == "Te-Hina Paopao"] <- "Te-Hina PaoPao"
 x$player[x$player == "Janelle Salaun"] <- "Janelle Salaün"
 x$player[x$player == "Hailey Van"] <- "Hailey Van Lith"
 x$player[x$player == "Shatori Walker"] <- "Shatori Walker-Kimbrough"
+x$player[x$player == "Anastasiia Olairi"] <- "Anastasiia Kosu"
 
 x$team <- ifelse(x$team == "CONN", "CON",
                  ifelse(x$team == "GS", "GSV",
@@ -118,13 +157,12 @@ x$team <- ifelse(x$team == "CONN", "CON",
                                              ifelse(x$team == "PHX", "PHO",
                                                     ifelse(x$team == "WSH", "WAS", x$team)))))))
 
-### save 
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
-# write.csv(x, "minutes played.csv", row.names = F)
+write.csv(x, "minutes played per.csv", row.names = F)
 
 ##### player data and analysis #####
 
-### webscrape primary data
+### web-scrape primary data
 x <- read_html("https://www.basketball-reference.com/wnba/years/2025_advanced.html")
 
 ### links
@@ -160,6 +198,7 @@ y <- data.frame(
   rtg = as.numeric(y$ORtg) - as.numeric(y$DRtg),
   ws = y$WS
 )
+y <- y[as.numeric(y$mp) >= 40,]
 
 ### keep players on their current rosters
 z <- list()
@@ -182,13 +221,13 @@ z <- as.data.frame(do.call(rbind, z))
 y <- y[paste(y$link, y$team) %in% paste(z$id, z$team),]
 
 ## remove players with little data
-y <- subset(y, as.numeric(y$mp) >= 40)
 y[,4:8] <- lapply(y[,4:8], as.numeric)
 
 ## supplement minutes played measure
-x <- read.csv("minutes played.csv")
+x <- read.csv("minutes played per.csv")
 y$mp_g <- x$mp_g[match(paste(y$player, y$team),
                        paste(x$player, x$team))]
+# y <- y[!is.na(y$mp_g),]
 
 ### create measure of minutes played per game, scale by team
 z <- aggregate(mp_g ~ team, y, sum)
@@ -310,7 +349,6 @@ x <- x[order(-x$rating),]
 x$rating <- round(x$rating)
 
 ##### save work #####
-
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
 # write.csv(x, "WNBA_Ratings_and_Rotations.csv", row.names = F)
 # write.csv(r, "WNBA_Team_Ratings.csv", row.names = F)
