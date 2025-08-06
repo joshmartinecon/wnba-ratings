@@ -16,15 +16,21 @@ ui <- navbarPage(
   
   header = tags$head(
     tags$style(HTML("
-      .arrow-zero   { color: gray;        font-weight: bold; font-size: 18px; }
-      .arrow-up-1   { color: forestgreen; font-weight: bold; font-size: 18px; }
-      .arrow-up-2   { color: forestgreen; font-weight: bold; font-size: 18px; }
-      .arrow-up-3   { color: forestgreen; font-weight: bold; font-size: 18px; }
-      .arrow-down-1 { color: crimson;     font-weight: bold; font-size: 18px; }
-      .arrow-down-2 { color: crimson;     font-weight: bold; font-size: 18px; }
-      .arrow-down-3 { color: crimson;     font-weight: bold; font-size: 18px; }
-    "))
+    .arrow-zero   { color: gray;        font-weight: bold; font-size: 18px; }
+    .arrow-up-1   { color: forestgreen; font-weight: bold; font-size: 18px; }
+    .arrow-up-2   { color: forestgreen; font-weight: bold; font-size: 18px; }
+    .arrow-up-3   { color: forestgreen; font-weight: bold; font-size: 18px; }
+    .arrow-down-1 { color: crimson;     font-weight: bold; font-size: 18px; }
+    .arrow-down-2 { color: crimson;     font-weight: bold; font-size: 18px; }
+    .arrow-down-3 { color: crimson;     font-weight: bold; font-size: 18px; }
+    
+    table.dataTable th, table.dataTable td {
+      white-space: nowrap;     /* Prevent text wrapping */
+      width: auto !important;  /* Allow column to shrink to fit */
+    }
+  "))
   ),
+  
   
   tabPanel("All Players",
            fluidPage(

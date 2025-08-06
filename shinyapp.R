@@ -18,15 +18,21 @@ ui <- navbarPage(
   
   header = tags$head(
     tags$style(HTML("
-      .arrow-zero   { color: gray;        font-weight: bold; font-size: 18px; }
-      .arrow-up-1   { color: forestgreen; font-weight: bold; font-size: 18px; }
-      .arrow-up-2   { color: forestgreen; font-weight: bold; font-size: 18px; }
-      .arrow-up-3   { color: forestgreen; font-weight: bold; font-size: 18px; }
-      .arrow-down-1 { color: crimson;     font-weight: bold; font-size: 18px; }
-      .arrow-down-2 { color: crimson;     font-weight: bold; font-size: 18px; }
-      .arrow-down-3 { color: crimson;     font-weight: bold; font-size: 18px; }
-    "))
+    .arrow-zero   { color: gray;        font-weight: bold; font-size: 18px; }
+    .arrow-up-1   { color: forestgreen; font-weight: bold; font-size: 18px; }
+    .arrow-up-2   { color: forestgreen; font-weight: bold; font-size: 18px; }
+    .arrow-up-3   { color: forestgreen; font-weight: bold; font-size: 18px; }
+    .arrow-down-1 { color: crimson;     font-weight: bold; font-size: 18px; }
+    .arrow-down-2 { color: crimson;     font-weight: bold; font-size: 18px; }
+    .arrow-down-3 { color: crimson;     font-weight: bold; font-size: 18px; }
+    
+    table.dataTable th, table.dataTable td {
+      white-space: nowrap;     /* Prevent text wrapping */
+      width: auto !important;  /* Allow column to shrink to fit */
+    }
+  "))
   ),
+  
   
   tabPanel("All Players",
            fluidPage(
@@ -132,20 +138,20 @@ server <- function(input, output, session) {
       arrange(desc(rating)) %>%
       mutate(
         delta = case_when(
-          min_diff >= 15  ~ "<span style='color:forestgreen;'>&#8593;&#8593;&#8593;</span>",  # ↑↑↑
-          min_diff >= 10  ~ "<span style='color:forestgreen;'>&#8593;&#8593;</span>",         # ↑↑
-          min_diff >  5   ~ "<span style='color:forestgreen;'>&#8593;</span>",                # ↑
-          min_diff <= -15 ~ "<span style='color:crimson;'>&#8595;&#8595;&#8595;</span>",      # ↓↓↓
-          min_diff <= -10 ~ "<span style='color:crimson;'>&#8595;&#8595;</span>",             # ↓↓
-          min_diff <  -5  ~ "<span style='color:crimson;'>&#8595;</span>",                    # ↓
+          min_diff >= 15  ~ "<span style='color:forestgreen;'>&#8593;&#8593;&#8593;</span>",  # bbb
+          min_diff >= 10  ~ "<span style='color:forestgreen;'>&#8593;&#8593;</span>",         # bb
+          min_diff >  5   ~ "<span style='color:forestgreen;'>&#8593;</span>",                # b
+          min_diff <= -15 ~ "<span style='color:crimson;'>&#8595;&#8595;&#8595;</span>",      # bbb
+          min_diff <= -10 ~ "<span style='color:crimson;'>&#8595;&#8595;</span>",             # bb
+          min_diff <  -5  ~ "<span style='color:crimson;'>&#8595;</span>",                    # b
           TRUE            ~ "<span style='color:gray;'>-</span>"
         )
       ) %>%
       select(
         Player = player,
         `MP/G` = mp_g,
-        `Target MP/G` = mp_g_star,
-        `Minutes Change` = delta,
+        `MP/G*` = mp_g_star,
+        `Change` = delta,
         Rating = rating
       )
     

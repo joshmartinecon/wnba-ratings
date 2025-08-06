@@ -60,20 +60,20 @@ server <- function(input, output, session) {
       arrange(desc(rating)) %>%
       mutate(
         delta = case_when(
-          min_diff >= 15  ~ "<span style='color:forestgreen;'>&#8593;&#8593;&#8593;</span>",  # ↑↑↑
-          min_diff >= 10  ~ "<span style='color:forestgreen;'>&#8593;&#8593;</span>",         # ↑↑
-          min_diff >  5   ~ "<span style='color:forestgreen;'>&#8593;</span>",                # ↑
-          min_diff <= -15 ~ "<span style='color:crimson;'>&#8595;&#8595;&#8595;</span>",      # ↓↓↓
-          min_diff <= -10 ~ "<span style='color:crimson;'>&#8595;&#8595;</span>",             # ↓↓
-          min_diff <  -5  ~ "<span style='color:crimson;'>&#8595;</span>",                    # ↓
+          min_diff >= 15  ~ "<span style='color:forestgreen;'>&#8593;&#8593;&#8593;</span>",  # bbb
+          min_diff >= 10  ~ "<span style='color:forestgreen;'>&#8593;&#8593;</span>",         # bb
+          min_diff >  5   ~ "<span style='color:forestgreen;'>&#8593;</span>",                # b
+          min_diff <= -15 ~ "<span style='color:crimson;'>&#8595;&#8595;&#8595;</span>",      # bbb
+          min_diff <= -10 ~ "<span style='color:crimson;'>&#8595;&#8595;</span>",             # bb
+          min_diff <  -5  ~ "<span style='color:crimson;'>&#8595;</span>",                    # b
           TRUE            ~ "<span style='color:gray;'>-</span>"
         )
       ) %>%
       select(
         Player = player,
         `MP/G` = mp_g,
-        `Target MP/G` = mp_g_star,
-        `Minutes Change` = delta,
+        `MP/G*` = mp_g_star,
+        `Change` = delta,
         Rating = rating
       )
     

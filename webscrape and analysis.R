@@ -82,6 +82,10 @@ for(i in 1:length(a)){
     str_trim() %>%
     as.Date(., format = "%B %d, %Y") -> dt
   
+  if(is.na(as.Date(dt))){
+    break
+  }
+  
   ### team 1
   x <- cbind(as.data.frame(y[2]), as.data.frame(y[3]))
   colnames(x) <- x[1,]
@@ -104,8 +108,19 @@ for(i in 1:length(a)){
   )
   z <- z[!grepl("bench|team", z$player) & z$player != "" & !grepl("DNP", z$mp),]
   
+  x <- data.frame(
+    player = c(x[,1], z[,1]),
+    mp = as.numeric(c(x[,2], z[,2])),
+    team = c(x[,3], z[,3]),
+    date = dt
+  )
+  
+  if(TRUE %in% is.na(as.Date(x$date))){
+    break
+  }
+  
   ### combine
-  b[[length(b)+1]] <- cbind(rbind(x, z), date = dt)
+  b[[length(b)+1]] <- x
   Sys.sleep(5)
   cat(round(i/length(a), 2), "\r")
 }
