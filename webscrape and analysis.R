@@ -127,7 +127,14 @@ for(i in 1:length(a)){
 
 ### compile and clean save data
 y <- as.data.frame(do.call(rbind, b))
+
 x <- read.csv("minutes played.csv")
+x <- data.frame(
+  player = x$player,
+  mp = as.numeric(x$mp),
+  team = x$team,
+  date = as.Date(x$date)
+)
 y <- rbind(x, y)
 
 ot2 <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 45])
@@ -242,16 +249,31 @@ y[,4:8] <- lapply(y[,4:8], as.numeric)
 x <- read.csv("minutes played per.csv")
 y$mp_g <- x$mp_g[match(paste(y$player, y$team),
                        paste(x$player, x$team))]
-# y <- y[!is.na(y$mp_g),]
 
-### create measure of minutes played per game, scale by team
-z <- aggregate(mp_g ~ team, y, sum)
-z$adj <- z[,2] / (40*5)
-y$mp_g_team <- y$mp_g / z$adj[match(y$team, z$team)]
+### scale minutes by team
+teams <- unique(y$team)
+x <- list()
+for(i in teams){
+  z <- y[y$team == i,]
+  cdf_fn <- ecdf(z$mp_g)
+  z$mp_g_team <- (cdf_fn(z$mp_g)*max(y$mp_g)) / sum(cdf_fn(z$mp_g)*max(y$mp_g)) * 200
+  while (any(z$mp_g_team > max(y$mp_g))) {
+    rule <- z$mp_g_team > max(y$mp_g)
+    allocate_mins <- sum(z$mp_g_team[rule] - max(y$mp_g))
+    z$mp_g_team <- ifelse(
+      !rule,
+      z$mp_g_team + cdf_fn(z$mp_g) / sum(cdf_fn(z$mp_g)) * allocate_mins,
+      max(y$mp_g)
+    )
+    z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
+  }
+  x[[length(x)+1]] <- z
+}
+y <- as.data.frame(do.call(rbind, x))
 
 ### standardize playing-time weighted efficiency variables
 for(i in 6:8){
-  y[,i] <- y[,i] * y$mp_g
+  y[,i] <- y[,i] * y$mp_g_team
   y[,i] <- (y[,i] - mean(y[,i])) / sd(y[,i])
 }
 y$score <- rowMeans(y[,6:8])
@@ -285,10 +307,14 @@ for(i in teams){
   cdf_fn <- ecdf(z$rating)
   z$mp_g_star <- cdf_fn(z$rating)*max(y$mp_g)
   z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
-  rule <- z$mp_g_star > max(y$mp_g)
-  if(TRUE %in% rule){
+  while (any(z$mp_g_star > max(y$mp_g))) {
+    rule <- z$mp_g_star > max(y$mp_g)
     allocate_mins <- sum(z$mp_g_star[rule] - max(y$mp_g))
-    z$mp_g_star <- ifelse(!rule, z$mp_g_star + cdf_fn(z$rating) / sum(cdf_fn(z$rating)) * allocate_mins, max(y$mp_g))
+    z$mp_g_star <- ifelse(
+      !rule,
+      z$mp_g_star + cdf_fn(z$rating) / sum(cdf_fn(z$rating)) * allocate_mins,
+      max(y$mp_g)
+    )
     z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
   }
   x[[length(x)+1]] <- z
@@ -301,14 +327,33 @@ x <- list()
 for(i in teams){
   z <- y[y$team == i,]
   z <- z[z$player %ni% w$Name,]
-  z$mp_g_team <- z$mp_g / sum(z$mp_g) * 200 
+  
+  cdf_fn <- ecdf(z$mp_g_team)
+  z$mp_g_team <- cdf_fn(z$mp_g_team)*max(y$mp_g)
+  z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
+  while (any(z$mp_g_team > max(y$mp_g))) {
+    rule <- z$mp_g_team > max(y$mp_g)
+    allocate_mins <- sum(z$mp_g_team[rule] - max(y$mp_g))
+    z$mp_g_team <- ifelse(
+      !rule,
+      z$mp_g_team + cdf_fn(z$mp_g_team) / sum(cdf_fn(z$mp_g_team)) * allocate_mins,
+      max(y$mp_g)
+    )
+    z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
+  }
+  
   cdf_fn <- ecdf(z$rating)
   z$mp_g_star <- cdf_fn(z$rating)*max(y$mp_g)
   z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
   rule <- z$mp_g_star > max(y$mp_g)
-  if(TRUE %in% rule){
+  while (any(z$mp_g_star > max(y$mp_g))) {
+    rule <- z$mp_g_star > max(y$mp_g)
     allocate_mins <- sum(z$mp_g_star[rule] - max(y$mp_g))
-    z$mp_g_star <- ifelse(!rule, z$mp_g_star + cdf_fn(z$rating) / sum(cdf_fn(z$rating)) * allocate_mins, max(y$mp_g))
+    z$mp_g_star <- ifelse(
+      !rule,
+      z$mp_g_star + cdf_fn(z$rating) / sum(cdf_fn(z$rating)) * allocate_mins,
+      max(y$mp_g)
+    )
     z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
   }
   x[[length(x)+1]] <- z
