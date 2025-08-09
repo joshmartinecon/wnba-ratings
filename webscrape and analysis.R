@@ -280,7 +280,7 @@ y$score <- rowMeans(y[,6:8])
 
 ### video-game style rating (logged)
 y$rating <- 60 + (asinh(y$score) - min(asinh(y$score)))/
-                    (max(asinh(y$score)) - min(asinh(y$score))) * (100-60)
+                    (max(asinh(y$score)) - min(asinh(y$score))) * (99-60)
 
 ### web scrape injuries
 w <- read_html("https://www.espn.com/wnba/injuries") %>%
