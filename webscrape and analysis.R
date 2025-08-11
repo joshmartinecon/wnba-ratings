@@ -9,6 +9,8 @@ library(stringr)
 ### Negate function
 '%ni%' <- Negate('%in%')
 
+##### step 1 #####
+
 ### web scrape box score links
 teams <- c("atl", "chi", "conn", "dal", "gs", "ind", "lv", "la", "min", "ny", "phx", "sea", "wsh")
 y <- list()
@@ -57,9 +59,11 @@ for(i in teams){
 ### compile and save data
 x <- as.data.frame(do.call(rbind, y))
 x <- x[!duplicated(x),]
-x <- x[order(x$date),]
+x <- x[order(x$date, x$link),]
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
-write.csv(x, "game links.csv", row.names = F)
+# write.csv(x, "game links.csv", row.names = F)
+
+##### step 2 #####
 
 ### game scrape
 y <- read.csv("minutes played.csv")
@@ -142,7 +146,9 @@ ot <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 40])
 ot <- ot[ot %ni% ot2]
 y$mp[paste(y$team, y$date) %in% ot] <- round(y$mp[paste(y$team, y$date) %in% ot] * (40/45))
 y$mp[paste(y$team, y$date) %in% ot2] <- round(y$mp[paste(y$team, y$date) %in% ot2] * (40/50))
-write.csv(y, "minutes played.csv")
+# write.csv(y, "minutes played.csv")
+
+##### step 3 #####
 
 z <- as.data.frame(table(paste(y$player, y$team)))
 x <- aggregate(as.numeric(mp) ~ player + team, y, sum)
@@ -170,6 +176,7 @@ x$player[x$player == "Janelle Salaun"] <- "Janelle Salaün"
 x$player[x$player == "Hailey Van"] <- "Hailey Van Lith"
 x$player[x$player == "Shatori Walker"] <- "Shatori Walker-Kimbrough"
 x$player[x$player == "Anastasiia Olairi"] <- "Anastasiia Kosu"
+x$player[x$player == "Mamignan Toure"] <- "Mamignan Touré"
 
 x$team <- ifelse(x$team == "CONN", "CON",
                  ifelse(x$team == "GS", "GSV",
@@ -180,9 +187,9 @@ x$team <- ifelse(x$team == "CONN", "CON",
                                                     ifelse(x$team == "WSH", "WAS", x$team)))))))
 
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
-write.csv(x, "minutes played per.csv", row.names = F)
+# write.csv(x, "minutes played per.csv", row.names = F)
 
-##### player data and analysis #####
+##### step 4 #####
 
 ### web-scrape primary data
 x <- read_html("https://www.basketball-reference.com/wnba/years/2025_advanced.html")
@@ -249,6 +256,9 @@ y[,4:8] <- lapply(y[,4:8], as.numeric)
 x <- read.csv("minutes played per.csv")
 y$mp_g <- x$mp_g[match(paste(y$player, y$team),
                        paste(x$player, x$team))]
+summary(y)
+
+##### step 5 #####
 
 ### scale minutes by team
 teams <- unique(y$team)
@@ -389,7 +399,7 @@ r$rotation_rating <- ecdf_fn(r$rotation_rating)
 ### simplify data
 r[,2:4] <- round(r[,2:4], 1)
 colnames(r)[2:3] <- c("rating", "strength")
-r <- r[order(-r$rating),]
+r <- r[order(-r$rating, -r$strength, -r$rotation_rating),]
 
 ### add back in injured players
 z <- y[y$link %ni% x$link,]
@@ -408,7 +418,6 @@ x$min_diff <- x$mp_g_star - x$mp_g
 x <- x[order(-x$rating),]
 x$rating <- round(x$rating)
 
-##### save work #####
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
 # write.csv(x, "WNBA_Ratings_and_Rotations.csv", row.names = F)
 # write.csv(r, "WNBA_Team_Ratings.csv", row.names = F)
