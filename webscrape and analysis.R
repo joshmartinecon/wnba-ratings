@@ -146,6 +146,7 @@ ot <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 40])
 ot <- ot[ot %ni% ot2]
 y$mp[paste(y$team, y$date) %in% ot] <- round(y$mp[paste(y$team, y$date) %in% ot] * (40/45))
 y$mp[paste(y$team, y$date) %in% ot2] <- round(y$mp[paste(y$team, y$date) %in% ot2] * (40/50))
+summary(y)
 # write.csv(y, "minutes played.csv")
 
 ##### step 3 #####
@@ -187,6 +188,7 @@ x$team <- ifelse(x$team == "CONN", "CON",
                                                     ifelse(x$team == "WSH", "WAS", x$team)))))))
 
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
+summary(x)
 # write.csv(x, "minutes played per.csv", row.names = F)
 
 ##### step 4 #####
