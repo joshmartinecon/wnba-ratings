@@ -12,7 +12,7 @@ library(stringr)
 ##### step 1 #####
 
 ### web scrape box score links
-teams <- c("atl", "chi", "conn", "dal", "gs", "ind", "lv", "la", "min", "ny", "phx", "sea", "wsh")
+teams <- c("atl", "chi", "con", "dal", "gs", "ind", "lv", "la", "min", "ny", "phx", "sea", "wsh")
 y <- list()
 
 ### scrape the urls for each team's schedule
