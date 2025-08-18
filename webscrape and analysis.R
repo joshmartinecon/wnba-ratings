@@ -61,6 +61,7 @@ x <- as.data.frame(do.call(rbind, y))
 x <- x[!duplicated(x),]
 x <- x[order(x$date, x$link),]
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
+View(x)
 # write.csv(x, "game links.csv", row.names = F)
 
 ##### step 2 #####
