@@ -422,6 +422,11 @@ x <- x[order(-x$rating),]
 x$rating <- round(x$rating)
 
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
+r
+head(x)
+
+##### save ####
+
 # write.csv(x, "WNBA_Ratings_and_Rotations.csv", row.names = F)
 # write.csv(r, "WNBA_Team_Ratings.csv", row.names = F)
 # write.csv(Sys.time(), "last_updated.csv")
