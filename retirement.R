@@ -11,10 +11,10 @@ for(i in 2:nrow(x)){
 }
 
 x$savings <- x$salary*0.06
-x$TRS <- ifelse(x$year < 10, x$savings, x$savings + x$savings*0.2114)
-x$TRS_total <- ifelse(x$year < 10, cumsum(x$savings), cumsum(x$savings + x$savings*0.2114))
+x$TRS <- ifelse(x$year < 10, x$savings, x$savings + x$salary*0.2114)
+x$TRS_total <- ifelse(x$year < 10, cumsum(x$savings), cumsum(x$savings + x$salary*0.2114))
 
-x$ORP <- x$savings + x$savings*0.0924
+x$ORP <- x$savings + x$salary*0.0924
 x$ORP_total <- cumsum(x$ORP)
 
 par(mar = c(4.5, 4.5, 1, 1))
@@ -50,16 +50,16 @@ plot(x$year, x$prob_leave, type = "l", lwd = 4,
      xlab = "Years at UWG", ylab = "Cumulative Prob. of Exit",
      cex.axis = 1.25, cex.lab = 1.5)
 
-plot(x$year, (1-x$prob_leave)*x$diff, type = "l", lwd = 4,
+plot(x$year, (x$prob_leave)*(x$TRS - x$ORP), type = "l", lwd = 4,
      xlab = "Years at UWG", ylab = "E[Diff. in Savings ($1k)]",
      cex.axis = 1.25, cex.lab = 1.5)
 abline(h = 0, lty = 2)
 abline(v = 10, lty = 2)
 
-x$break_even <- cumsum((1-x$prob_leave)*x$diff)
+x$break_even <- cumsum((x$prob_leave)*(x$TRS - x$ORP))
 # x$break_even <- cumsum(x$diff)
 plot(x$year, x$break_even, type = "l", lwd = 4,
      xlab = "Years at UWG", ylab = "Sum(E[Diff. in Savings])",
      cex.axis = 1.25, cex.lab = 1.5)
 abline(h = 0, lty = 2)
-abline(v = 14, lty = 2)
+abline(v = 13, lty = 2)
