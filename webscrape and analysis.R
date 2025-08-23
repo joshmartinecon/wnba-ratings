@@ -132,6 +132,12 @@ for(i in 1:length(a)){
 
 ### compile and clean save data
 y <- as.data.frame(do.call(rbind, b))
+z <- data.frame(
+  team = c("AcesLV", "DreamATL", "FeverIND", "LibertyNY", "LynxMIN", "MercuryPHX", "MysticsWSH", 
+           "SkyCHI", "SparksLA", "StormSEA", "SunCON", "ValkyriesGS","WingsDAL"),
+  abr = c("LV", "ATL", "IND", "NY", "MIN", "PHX", "WSH", "CHI", "LA", "SEA", "CON", "GS", "DAL")
+)
+y$team <- ifelse(y$team %in% z$team, z$abr[match(y$team, z$team)], y$team)
 
 x <- read.csv("minutes played.csv")
 x <- data.frame(
