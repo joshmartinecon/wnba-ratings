@@ -7,59 +7,73 @@ x <- data.frame(
 )
 
 for(i in 2:nrow(x)){
-  x$salary[i] <- x$salary[i-1] * 1.02
+  x$salary[i] <- x$salary[i-1]*1.02
 }
+
+#### TRS #####
 
 x$savings <- x$salary*0.06
-x$TRS <- ifelse(x$year < 10, x$savings, x$savings + x$salary*0.2114)
-x$TRS_total <- ifelse(x$year < 10, cumsum(x$savings), cumsum(x$savings + x$salary*0.2114))
+x$TRS <- x$savings
+x$TRS_total <- cumsum(x$TRS)
+x$TRS_10 <- x$savings + x$salary*0.2114
+x$TRS_10_total <- cumsum(x$TRS_10)
+x$TRS_10_total[1:9] <- x$TRS_total[1:10]
+x$TRS_benefit <- 0.02*x$salary*x$year*20
+x$TRS_benefit[1:9] <- 0
+
+x$TRS_10_total <- ifelse(x$year < 10, x$TRS_10_total, x$TRS_benefit)
+
+##### ORP #####
 
 x$ORP <- x$savings + x$salary*0.0924
-x$ORP_total <- cumsum(x$ORP)
+
+x$ORP_total_low <- x$ORP[1] * 1.03
+for(i in 2:nrow(x)){
+  x$ORP_total_low[i] <- (x$ORP_total_low[i-1] + x$ORP[i])*1.03
+}
+
+x$ORP_total_med <- x$ORP[1] * 1.06
+for(i in 2:nrow(x)){
+  x$ORP_total_med[i] <- (x$ORP_total_med[i-1] + x$ORP[i])*1.06
+}
+
+x$ORP_total_high <- x$ORP[1] * 1.09
+for(i in 2:nrow(x)){
+  x$ORP_total_high[i] <- (x$ORP_total_high[i-1] + x$ORP[i])*1.09
+}
+
+x$diff_low <- ifelse(x$year < 10, x$TRS_10_total, x$TRS_10_total / (1+0.03)^(30-x$year)) - 
+  x$ORP_total_low 
+x$diff_med <- ifelse(x$year < 10, x$TRS_10_total, x$TRS_10_total / (1+0.06)^(30-x$year)) - 
+  x$ORP_total_med 
+x$diff_high <- ifelse(x$year < 10, x$TRS_10_total, x$TRS_10_total / (1+0.09)^(30-x$year)) - 
+  x$ORP_total_high
 
 par(mar = c(4.5, 4.5, 1, 1))
-plot(x$year, x$TRS_total, type = "l", lwd = 4,
-     xlab = "Years at UWG", ylab = "Retirement Savings ($1k)",
+plot(rep(x$year, 3), c(x$diff_low, x$diff_med, x$diff_high),
+     xlab = "Years at UWG", ylab = "Difference in Earnings ($100k): TRS vs ORP",
      cex.axis = 1.25, cex.lab = 1.5)
-lines(x$year, x$ORP_total, lty = 2, lwd = 4)
-legend("topleft",
-       legend = c("TRS", "ORP"),
-       lwd = 2, lty = c(1, 2), bty = "n",
-       cex = 1.25)
+abline(h = 0, lwd = 1000000, col = "aliceblue")
+abline(h = seq(-1500, 0, 500), lwd = 4, col = "white")
+abline(v = seq(0, 30, 5), lwd = 4, col = "white")
+abline(h = 0, lwd = 4, lty = 2)
+lines(x$year, x$diff_low, lwd = 8, col = "red")
+lines(x$year, x$diff_med, lwd = 8, col = "yellow")
+lines(x$year, x$diff_high, lwd = 8, col = "green")
 
-x$diff <- x$TRS_total - x$ORP_total
+x$prob_leave <- log(seq_len(nrow(x))) / log(nrow(x))
 
-plot(x$year, x$diff, type = "l", lwd = 4,
-     cex.axis = 1.25, cex.lab = 1.5,
-     xlab = "Years at UWG", ylab = "Diff. in Savings ($1k)")
-abline(v = 10, lty = 2, lwd = 2)
-abline(h = 0, lty = 2, lwd = 2)
+x$ev_diff_low <- x$diff_low * (x$prob_leave)
+x$ev_diff_med <- x$diff_med * (x$prob_leave)
+x$ev_diff_high <- x$diff_high * (x$prob_leave)
 
-x$diff <- x$TRS_total - x$ORP_total
-z <- list()
-for(i in seq(0, 1, 0.01)){
-  x$prob_leave <- i * log(seq_len(nrow(x))) / log(nrow(x))
-  z[[length(z)+1]] <- data.frame(
-    prob_leave = i,
-    ev_trs = sum(x$diff*(1-x$prob_leave))
-  )
-}
-z <- as.data.frame(do.call(rbind, z))
-
-plot(x$year, x$prob_leave, type = "l", lwd = 4,
-     xlab = "Years at UWG", ylab = "Cumulative Prob. of Exit",
+plot(rep(x$year, 3), c(x$ev_diff_low, x$ev_diff_med, x$ev_diff_high),
+     xlab = "Years at UWG", ylab = "Exp. Difference in Earnings ($100k): TRS vs ORP",
      cex.axis = 1.25, cex.lab = 1.5)
-
-plot(x$year, (x$prob_leave)*(x$TRS - x$ORP), type = "l", lwd = 4,
-     xlab = "Years at UWG", ylab = "E[Diff. in Savings ($1k)]",
-     cex.axis = 1.25, cex.lab = 1.5)
-abline(h = 0, lty = 2)
-abline(v = 10, lty = 2)
-
-x$break_even <- cumsum((x$prob_leave)*(x$TRS - x$ORP))
-# x$break_even <- cumsum(x$diff)
-plot(x$year, x$break_even, type = "l", lwd = 4,
-     xlab = "Years at UWG", ylab = "Sum(E[Diff. in Savings])",
-     cex.axis = 1.25, cex.lab = 1.5)
-abline(h = 0, lty = 2)
-abline(v = 13, lty = 2)
+abline(h = 0, lwd = 1000000, col = "aliceblue")
+abline(h = seq(-60, 20, 20), lwd = 4, col = "white")
+abline(v = seq(0, 30, 5), lwd = 4, col = "white")
+abline(h = 0, lwd = 4, lty = 2)
+lines(x$year, x$ev_diff_low, lwd = 8, col = "red")
+lines(x$year, x$ev_diff_med, lwd = 8, col = "yellow")
+lines(x$year, x$ev_diff_high, lwd = 8, col = "green")
