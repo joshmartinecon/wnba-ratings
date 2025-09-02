@@ -61,8 +61,8 @@ x <- as.data.frame(do.call(rbind, y))
 x <- x[!duplicated(x),]
 x <- x[order(x$date, x$link),]
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
-View(x)
-# write.csv(x, "game links.csv", row.names = F)
+# View(x)
+write.csv(x, "game links.csv", row.names = F)
 
 ##### step 2 #####
 
@@ -153,8 +153,8 @@ ot <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 40])
 ot <- ot[ot %ni% ot2]
 y$mp[paste(y$team, y$date) %in% ot] <- round(y$mp[paste(y$team, y$date) %in% ot] * (40/45))
 y$mp[paste(y$team, y$date) %in% ot2] <- round(y$mp[paste(y$team, y$date) %in% ot2] * (40/50))
-summary(y)
-# write.csv(y, "minutes played.csv")
+# summary(y)
+write.csv(y, "minutes played.csv")
 
 ##### step 3 #####
 
@@ -195,8 +195,8 @@ x$team <- ifelse(x$team == "CONN", "CON",
                                                     ifelse(x$team == "WSH", "WAS", x$team)))))))
 
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
-summary(x)
-# write.csv(x, "minutes played per.csv", row.names = F)
+# summary(x)
+write.csv(x, "minutes played per.csv", row.names = F)
 
 ##### step 4 #####
 
@@ -265,7 +265,7 @@ y[,4:8] <- lapply(y[,4:8], as.numeric)
 x <- read.csv("minutes played per.csv")
 y$mp_g <- x$mp_g[match(paste(y$player, y$team),
                        paste(x$player, x$team))]
-summary(y)
+# summary(y)
 
 ##### step 5 #####
 
@@ -428,11 +428,11 @@ x <- x[order(-x$rating),]
 x$rating <- round(x$rating)
 
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
-r
-head(x)
+# r
+# head(x)
 
 ##### save ####
 
-# write.csv(x, "WNBA_Ratings_and_Rotations.csv", row.names = F)
-# write.csv(r, "WNBA_Team_Ratings.csv", row.names = F)
-# write.csv(Sys.time(), "last_updated.csv")
+write.csv(x, "WNBA_Ratings_and_Rotations.csv", row.names = F)
+write.csv(r, "WNBA_Team_Ratings.csv", row.names = F)
+write.csv(Sys.time(), "last_updated.csv")
