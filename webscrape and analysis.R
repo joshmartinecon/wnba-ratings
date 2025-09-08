@@ -428,8 +428,8 @@ x <- x[order(-x$rating),]
 x$rating <- round(x$rating)
 
 setwd("C:/Users/jmart/OneDrive/Desktop/GitHub/wnba-ratings")
-# r
-# head(x)
+r
+head(x)
 
 ##### save ####
 
