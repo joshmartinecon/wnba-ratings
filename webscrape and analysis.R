@@ -26,7 +26,11 @@ for(i in teams){
     as.data.frame() -> z
   colnames(z) <- z[2,]
   z <- z[c(-1:-2),]
-  z <- z[1:((1:nrow(z))[grepl("Regular|Cup", z[,1])]-1),]
+  if(TRUE %in% grepl("Regular|Cup", z[,1])){
+    z <- z[1:((1:nrow(z))[grepl("Regular|Cup", z[,1])]-1),]
+  }else{
+    next
+  }
   
   z$DATE %>%
     str_remove("^[A-Za-z]{3},\\s*") %>%       # Remove "Fri," etc.
