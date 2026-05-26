@@ -1,6 +1,6 @@
 # WNBA Ratings & Optimal Rotations
 
-This repository powers a [Shiny app](https://joshmartinecon.shinyapps.io/wnba-explorer/) that ranks WNBA players using advanced statistics and estimates optimal playing time allocations across teams. The app helps visualize how team and player performance might change under re-optimized rotations based on actual productivity.
+This repository powers a [Shiny app](https://joshua-c-martin.shinyapps.io/wnba-ratings/) that ranks WNBA players using advanced statistics and estimates optimal playing time allocations across teams. The app helps visualize how team and player performance might change under re-optimized rotations based on actual productivity.
 
 ## Overview
 

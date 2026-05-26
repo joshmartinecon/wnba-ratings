@@ -78,7 +78,7 @@ ui <- navbarPage(
                         tags$div("+ = injured")
                       ),
                       wellPanel(
-                        selectInput("team_select", "Select Team:", choices = c("ATL","CHI","CON","DAL","GSV","IND","LAS","LVA","MIN","NYL","PHO","SEA","WAS"), selected = "ATL")
+                        selectInput("team_select", "Select Team:", choices = c("ATL","CHI","CON","DAL","GSV","IND","LAS","LVA","MIN","NYL","PHO", "POR", "SEA", "TOR", "WAS"), selected = "ATL")
                       )
                ),
                column(6, DTOutput("team_table"))

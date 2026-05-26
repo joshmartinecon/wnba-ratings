@@ -1,0 +1,12 @@
+name: wnba-ratings
+title: wnba-ratings
+username: joshua-c-martin
+account: joshua-c-martin
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14971562
+bundleId: 12039063
+url: https://joshua-c-martin.shinyapps.io/wnba-ratings/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
