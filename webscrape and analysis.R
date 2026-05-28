@@ -11,61 +11,7 @@ library(stringr)
 
 ##### step 1: team schedules #####
 
-### web scrape box score links
-teams <- c("atl", "chi", "con", "dal", "gs", "ind", "lv", "la", "min", "ny", "phx", "por", "sea", "tor", "wsh")
-y <- list()
-
-### scrape the urls for each team's schedule
-for(i in teams){
-  
-  ### start
-  x <- read_html(paste0("https://www.espn.com/wnba/team/schedule/_/name/", i))
-  
-  x %>% 
-    html_table() %>%
-    as.data.frame() -> z
-  colnames(z) <- z[2,]
-  z <- z[c(-1:-2),]
-  if(TRUE %in% grepl("Regular|Cup", z[,1])){
-    z <- z[1:((1:nrow(z))[grepl("Regular|Cup", z[,1])]-1),]
-  }else{
-    next
-  }
-  
-  z$DATE %>%
-    str_remove("^[A-Za-z]{3},\\s*") %>%       # Remove "Fri," etc.
-    paste("2026") %>%                         # Add year
-    as.Date(format = "%B %d %Y") -> z$DATE  
-  
-  ### links
-  x %>%
-    html_elements("a") %>%
-    html_attr("href") -> a
-  
-  ### game links
-  b <- unique(a[grepl("gameId", a)])
-  b <- b[!grepl("preview", b)]
-  
-  ### box score links
-  a <- gsub("game/_/", "boxscore/_/", b)
-  a <- sub("/[^/]*$", "", a)
-  
-  ### save
-  y[[length(y)+1]] <- data.frame(
-    date = z$DATE,
-    link = a[1:nrow(z)]
-  )
-  
-  ### rest
-  Sys.sleep(5)
-}
-
-### compile and save data
-x <- as.data.frame(do.call(rbind, y))
-x <- x[!duplicated(x),]
-x <- x[order(x$date, x$link),]
-setwd("/home/jmartin/Desktop/Dropbox/github/wnba-ratings")
-write.csv(x, "game links.csv", row.names = F)
+x <- read.csv("game links.csv")
 
 ##### step 2: game-score prod. metric #####
 
@@ -78,7 +24,7 @@ dates <- data.frame(
 )
 dates$month <- ifelse(nchar(dates$month) == 1, paste0("0", dates$month), dates$month)
 gs <- read.csv("game scores.csv")
-dates <- dates[dates$date > max(gs$date),]
+dates <- dates[dates$date > max(gs$date) & dates$date < Sys.Date(),]
 
 z <- list()
 for(i in 1:nrow(dates)){
@@ -120,12 +66,12 @@ write.csv(gs, "game scores.csv", row.names = F)
 ### game scrape
 y <- read.csv("minutes played.csv")
 gl <- read.csv("game links.csv")
-a <- gl$link[gl$date > max(y$date)]
+a <- gl$link[gl$date > max(y$date) & gl$date < Sys.Date()]
 b <- list()
 for(i in 1:length(a)){
   
   ### start
-  x <- read_html(a[i])
+  x <- read_html(gsub("/game/", "/boxscore/", a[i]))
   
   ### table
   x %>%
@@ -156,9 +102,9 @@ for(i in 1:length(a)){
   x <- data.frame(
     player = c(x[,1], z[,1]),
     mp = as.numeric(c(x[,2], z[,2])),
-    team = c(x[,3], z[,3]),
-    date = gl$date[i]
+    team = c(x[,3], z[,3])
   )
+  x$date <- gl$date[match(a[i], gl$link)]
   
   if(TRUE %in% is.na(as.Date(x$date))){
     break
@@ -187,10 +133,9 @@ x <- data.frame(
   date = as.Date(x$date)
 )
 y <- rbind(x, y)
-y$mp[is.na(y$mp)] <- 0
 
-ot2 <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 45])
-ot <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 40])
+ot2 <- unique(paste(y$team, y$date)[as.numeric(y$mp) > 45])
+ot <- unique(paste(y$team, y$date)[as.numeric(y$mp) > 40])
 ot <- ot[ot %ni% ot2]
 y$mp[paste(y$team, y$date) %in% ot] <- round(y$mp[paste(y$team, y$date) %in% ot] * (40/45))
 y$mp[paste(y$team, y$date) %in% ot2] <- round(y$mp[paste(y$team, y$date) %in% ot2] * (40/50))
@@ -242,6 +187,8 @@ x$player[x$player == "Marta Suarez"] <- "Marta Suárez"
 x$player[x$player == "Alex Wilson"] <- "Ally Wilson"
 x$player[x$player == "Grace Van"] <- "Grace VanSlooten"
 x$player[x$player == "Juste Jocyte"] <- "Justė Jocytė"
+x$player[x$player == "Monique Akoa"] <- "Monique Akoa Makani"
+x$player[x$player == "Alicia Florez"] <- "Alicia Flórez"
 
 x$team <- ifelse(x$team == "CONN", "CON",
                  ifelse(x$team == "GS", "GSV",
@@ -328,23 +275,28 @@ y$mp_g <- x$mp_g[match(paste(y$player, y$team),
 ##### step 6: scale playing time by team #####
 
 ### scale minutes by team
-y <- subset(y, !is.na(y$rtg))
 teams <- unique(y$team)
 x <- list()
 for(i in teams){
+  
   z <- y[y$team == i,]
-  cdf_fn <- ecdf(z$mp_g)
-  z$mp_g_team <- (cdf_fn(z$mp_g)*max(y$mp_g)) / sum(cdf_fn(z$mp_g)*max(y$mp_g)) * 200
+  z <- z[z$mp > quantile(y$mp)[2],]
+  z <- z[z$mp_g >= 5,]
+  z <- z[order(-z$mp_g, -z$g),]
+  z <- z[1:ifelse(nrow(z) > 10, 10, nrow(z)),]
+  z$mp_g_team <- z$mp_g / sum(z$mp_g) * 200
+  
   while (any(z$mp_g_team > max(y$mp_g))) {
     rule <- z$mp_g_team > max(y$mp_g)
     allocate_mins <- sum(z$mp_g_team[rule] - max(y$mp_g))
     z$mp_g_team <- ifelse(
       !rule,
-      z$mp_g_team + cdf_fn(z$mp_g) / sum(cdf_fn(z$mp_g)) * allocate_mins,
+      z$mp_g_team + z$mp_g / sum(z$mp_g_team) * allocate_mins,
       max(y$mp_g)
     )
     z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
   }
+  
   x[[length(x)+1]] <- z
 }
 y <- as.data.frame(do.call(rbind, x))
@@ -378,62 +330,60 @@ w <- read_html("https://www.espn.com/wnba/injuries") %>%
 w <- w[w$Status == "Out",]
 
 ### full squad playing time
+z <- data.frame(
+  mp = y$mp_g_team,
+  rtg = y$rating,
+  rtg2 = y$rating^2
+)
+y$mp_g_star <- predict(lm(mp ~ rtg + rtg, z))
+par(mar = c(4.5, 4.5, 1, 1))
+plot(y$rating, y$mp_g_team,
+     xlab = "Rating", ylab = "Minutes per Game")
+lines(y$rating, y$mp_g_star, lwd = 4)
+
 teams <- unique(y$team)
 x <- list()
 for(i in teams){
+  
   z <- y[y$team == i,]
-  cdf_fn <- ecdf(z$rating)
-  z$mp_g_star <- cdf_fn(z$rating)*max(y$mp_g)
+  z <- z[order(-z$mp_g_star),]
   z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
+  
   while (any(z$mp_g_star > max(y$mp_g))) {
     rule <- z$mp_g_star > max(y$mp_g)
     allocate_mins <- sum(z$mp_g_star[rule] - max(y$mp_g))
     z$mp_g_star <- ifelse(
       !rule,
-      z$mp_g_star + cdf_fn(z$rating) / sum(cdf_fn(z$rating)) * allocate_mins,
+      z$mp_g_star + z$mp_g_star / sum(z$mp_g_star) * allocate_mins,
       max(y$mp_g)
     )
     z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
   }
+  
   x[[length(x)+1]] <- z
+  
 }
 y <- as.data.frame(do.call(rbind, x))
-
+  
 ### current squad playing time
 teams <- unique(y$team)
 x <- list()
 for(i in teams){
   z <- y[y$team == i,]
   z <- z[z$player %ni% w$Name,]
+  z$mp_g_team <- z$mp_g / sum(z$mp_g) * 200
   
-  cdf_fn <- ecdf(z$mp_g_team)
-  z$mp_g_team <- cdf_fn(z$mp_g_team)*max(y$mp_g)
-  z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
   while (any(z$mp_g_team > max(y$mp_g))) {
     rule <- z$mp_g_team > max(y$mp_g)
     allocate_mins <- sum(z$mp_g_team[rule] - max(y$mp_g))
     z$mp_g_team <- ifelse(
       !rule,
-      z$mp_g_team + cdf_fn(z$mp_g_team) / sum(cdf_fn(z$mp_g_team)) * allocate_mins,
+      z$mp_g_team + z$mp_g / sum(z$mp_g_team) * allocate_mins,
       max(y$mp_g)
     )
     z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
   }
   
-  cdf_fn <- ecdf(z$rating)
-  z$mp_g_star <- cdf_fn(z$rating)*max(y$mp_g)
-  z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
-  rule <- z$mp_g_star > max(y$mp_g)
-  while (any(z$mp_g_star > max(y$mp_g))) {
-    rule <- z$mp_g_star > max(y$mp_g)
-    allocate_mins <- sum(z$mp_g_star[rule] - max(y$mp_g))
-    z$mp_g_star <- ifelse(
-      !rule,
-      z$mp_g_star + cdf_fn(z$rating) / sum(cdf_fn(z$rating)) * allocate_mins,
-      max(y$mp_g)
-    )
-    z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
-  }
   x[[length(x)+1]] <- z
 }
 x <- as.data.frame(do.call(rbind, x))
