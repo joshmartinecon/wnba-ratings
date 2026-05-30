@@ -24,7 +24,7 @@ dates <- data.frame(
 )
 dates$month <- ifelse(nchar(dates$month) == 1, paste0("0", dates$month), dates$month)
 gs <- read.csv("game scores.csv")
-dates <- dates[dates$date > max(gs$date) & dates$date < Sys.Date(),]
+dates <- dates[dates$date > max(gs$date) & as.Date(dates$date) < Sys.Date(),]
 
 z <- list()
 for(i in 1:nrow(dates)){
@@ -137,8 +137,10 @@ y <- rbind(x, y)
 ot2 <- unique(paste(y$team, y$date)[as.numeric(y$mp) > 45])
 ot <- unique(paste(y$team, y$date)[as.numeric(y$mp) > 40])
 ot <- ot[ot %ni% ot2]
-y$mp[paste(y$team, y$date) %in% ot] <- round(y$mp[paste(y$team, y$date) %in% ot] * (40/45))
-y$mp[paste(y$team, y$date) %in% ot2] <- round(y$mp[paste(y$team, y$date) %in% ot2] * (40/50))
+if(length(ot) > 0 | length(ot2) > 0){
+  y$mp[paste(y$team, y$date) %in% ot] <- round(y$mp[paste(y$team, y$date) %in% ot] * (40/45))
+  y$mp[paste(y$team, y$date) %in% ot2] <- round(y$mp[paste(y$team, y$date) %in% ot2] * (40/50)) 
+}
 write.csv(y, "minutes played.csv")
 
 ##### step 4: minutes per game #####
@@ -280,10 +282,10 @@ x <- list()
 for(i in teams){
   
   z <- y[y$team == i,]
-  z <- z[z$mp > quantile(y$mp)[2],]
-  z <- z[z$mp_g >= 5,]
-  z <- z[order(-z$mp_g, -z$g),]
-  z <- z[1:ifelse(nrow(z) > 10, 10, nrow(z)),]
+  # z <- z[z$mp > quantile(y$mp)[2],]
+  # z <- z[z$mp_g >= 5,]
+  z <- z[order(-z$mp, z$mp_g, -z$g),]
+  z <- z[1:ifelse(nrow(z) > 8, 8, nrow(z)),]
   z$mp_g_team <- z$mp_g / sum(z$mp_g) * 200
   
   while (any(z$mp_g_team > max(y$mp_g))) {
