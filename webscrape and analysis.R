@@ -346,11 +346,13 @@ z <- data.frame(
   rtg = y$rating,
   rtg2 = y$rating^2
 )
-y$mp_g_star <- predict(lm(mp ~ rtg + rtg, z))
+lm1 <- lm(mp ~ rtg + rtg2, z)
+y$mp_g_star <- predict(lm1)
 par(mar = c(4.5, 4.5, 1, 1))
 plot(y$rating, y$mp_g,
      xlab = "Rating", ylab = "Minutes per Game")
-lines(y$rating, y$mp_g_star, lwd = 4)
+z <- z[order(-z$rtg),]
+lines(z$rtg, predict(lm(mp ~ rtg + rtg2, z)), lwd = 4)
 
 ## expected minutes
 teams <- unique(y$team)
@@ -358,8 +360,7 @@ x <- list()
 for(i in teams){
   
   z <- y[y$team == i,]
-  z <- z[order(-z$mp_g_star),]
-  z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
+  z$mp_g_star <- z$mp_g_star + z$mp_g_star / sum(z$mp_g_star) * (200 - sum(z$mp_g_star))
   
   while (any(z$mp_g_star > max(y$mp_g))) {
     rule <- z$mp_g_star > max(y$mp_g)
@@ -384,7 +385,7 @@ for(i in teams){
   
   z <- y[y$team == i,]
   z <- z[z$mp_g_team > 0,]
-  z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
+  z$mp_g_star <- z$mp_g_star + z$mp_g_star / sum(z$mp_g_star) * (200 - sum(z$mp_g_star))
   
   while (any(z$mp_g_star > max(y$mp_g))) {
     rule <- z$mp_g_star > max(y$mp_g)
@@ -420,15 +421,13 @@ z <- data.frame(
 r$best_rating <- z[match(r$team, z$team),2]
 
 ### full team, best rotation rating
-z <- as.data.frame(aggregate(abs(mp_g_star - mp_g_team ) ~ team, x, sum))
+z <- as.data.frame(aggregate(abs(mp_g_star - mp_g_team) ~ team, x, sum))
 z <- data.frame(
   team = z[,1],
   rotation_rating = z[,2]
 )
-
+z[,2] <- ((max(y$mp_g_team) * 5) - z[,2]) / (max(y$mp_g_team) * 5) * 100
 r$rotation_rating <- z[match(r$team, z$team),2]
-ecdf_fn <- ecdf(r$rotation_rating)
-r$rotation_rating <- 1 - ecdf_fn(r$rotation_rating)
 
 ### simplify data
 r[,2:4] <- round(r[,2:4], 1)
