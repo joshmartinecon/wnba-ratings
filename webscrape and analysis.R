@@ -191,6 +191,7 @@ x$player[x$player == "Grace Van"] <- "Grace VanSlooten"
 x$player[x$player == "Juste Jocyte"] <- "Justė Jocytė"
 x$player[x$player == "Monique Akoa"] <- "Monique Akoa Makani"
 x$player[x$player == "Alicia Florez"] <- "Alicia Flórez"
+x$player[x$player == "Leila Lacan"] <- "Leïla Lacan"
 
 x$team <- ifelse(x$team == "CONN", "CON",
                  ifelse(x$team == "GS", "GSV",
@@ -276,44 +277,6 @@ y$mp_g <- x$mp_g[match(paste(y$player, y$team),
 
 ##### step 6: scale playing time by team #####
 
-### scale minutes by team
-teams <- unique(y$team)
-x <- list()
-for(i in teams){
-  
-  z <- y[y$team == i,]
-  # z <- z[z$mp > quantile(y$mp)[2],]
-  # z <- z[z$mp_g >= 5,]
-  z <- z[order(-z$mp, z$mp_g, -z$g),]
-  z <- z[1:ifelse(nrow(z) > 8, 8, nrow(z)),]
-  z$mp_g_team <- z$mp_g / sum(z$mp_g) * 200
-  
-  while (any(z$mp_g_team > max(y$mp_g))) {
-    rule <- z$mp_g_team > max(y$mp_g)
-    allocate_mins <- sum(z$mp_g_team[rule] - max(y$mp_g))
-    z$mp_g_team <- ifelse(
-      !rule,
-      z$mp_g_team + z$mp_g / sum(z$mp_g_team) * allocate_mins,
-      max(y$mp_g)
-    )
-    z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
-  }
-  
-  x[[length(x)+1]] <- z
-}
-y <- as.data.frame(do.call(rbind, x))
-
-### standardize playing-time weighted efficiency variables
-for(i in 6:9){
-  y[,i] <- y[,i] * y$mp_g_team
-  y[,i] <- (y[,i] - mean(y[,i])) / sd(y[,i])
-}
-y$score <- rowMeans(y[,6:9])
-
-### video-game style rating (logged)
-y$rating <- 60 + (asinh(y$score) - min(asinh(y$score)))/
-                    (max(asinh(y$score)) - min(asinh(y$score))) * (99-60)
-
 ### web scrape injuries
 w <- read_html("https://www.espn.com/wnba/injuries") %>%
   html_elements("tbody tr") %>%
@@ -329,20 +292,67 @@ w <- read_html("https://www.espn.com/wnba/injuries") %>%
     )
   }) %>%
   bind_rows()
-w <- w[w$Status == "Out",]
+
+### scale minutes by team
+teams <- unique(y$team)
+x <- list()
+for(i in teams){
+  
+  z <- y[y$team == i,]
+  z <- z[order(-z$mp, -z$mp_g, -z$g),]
+  
+  z1 <- z[z$player %in% w$Name,]
+  z1 <- z1[z1$mp_g >= 10,]
+  z2 <- z[z$player %ni% w$Name,]
+  
+  z <- z2[1:ifelse(nrow(z2) > 8, 8, nrow(z2)),]
+  z$mp_g_team <- z$mp_g / sum(z$mp_g) * 200
+  
+  while (any(z$mp_g_team > max(y$mp_g))) {
+    rule <- z$mp_g_team > max(y$mp_g)
+    allocate_mins <- sum(z$mp_g_team[rule] - max(y$mp_g))
+    z$mp_g_team <- ifelse(
+      !rule,
+      z$mp_g_team + z$mp_g / sum(z$mp_g_team) * allocate_mins,
+      max(y$mp_g)
+    )
+    z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
+  }
+  
+  if(nrow(z1) > 0){
+    z1$mp_g_team <- 0
+    x[[length(x)+1]] <- rbind(z, z1)
+  }else{
+    x[[length(x)+1]] <- z
+  }
+  
+}
+y <- as.data.frame(do.call(rbind, x))
+
+### standardize playing-time weighted efficiency variables
+for(i in 6:9){
+  y[,i] <- y[,i] * y$mp_g
+  y[,i] <- (y[,i] - mean(y[,i])) / sd(y[,i])
+}
+y$score <- rowMeans(y[,6:9])
+
+### video-game style rating (logged)
+y$rating <- 60 + (asinh(y$score) - min(asinh(y$score)))/
+                    (max(asinh(y$score)) - min(asinh(y$score))) * (99-60)
 
 ### full squad playing time
 z <- data.frame(
-  mp = y$mp_g_team,
+  mp = y$mp_g,
   rtg = y$rating,
   rtg2 = y$rating^2
 )
 y$mp_g_star <- predict(lm(mp ~ rtg + rtg, z))
 par(mar = c(4.5, 4.5, 1, 1))
-plot(y$rating, y$mp_g_team,
+plot(y$rating, y$mp_g,
      xlab = "Rating", ylab = "Minutes per Game")
 lines(y$rating, y$mp_g_star, lwd = 4)
 
+## expected minutes
 teams <- unique(y$team)
 x <- list()
 for(i in teams){
@@ -371,19 +381,20 @@ y <- as.data.frame(do.call(rbind, x))
 teams <- unique(y$team)
 x <- list()
 for(i in teams){
-  z <- y[y$team == i,]
-  z <- z[z$player %ni% w$Name,]
-  z$mp_g_team <- z$mp_g / sum(z$mp_g) * 200
   
-  while (any(z$mp_g_team > max(y$mp_g))) {
-    rule <- z$mp_g_team > max(y$mp_g)
-    allocate_mins <- sum(z$mp_g_team[rule] - max(y$mp_g))
-    z$mp_g_team <- ifelse(
+  z <- y[y$team == i,]
+  z <- z[z$mp_g_team > 0,]
+  z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
+  
+  while (any(z$mp_g_star > max(y$mp_g))) {
+    rule <- z$mp_g_star > max(y$mp_g)
+    allocate_mins <- sum(z$mp_g_star[rule] - max(y$mp_g))
+    z$mp_g_star <- ifelse(
       !rule,
-      z$mp_g_team + z$mp_g / sum(z$mp_g_team) * allocate_mins,
+      z$mp_g_star + z$mp_g / sum(z$mp_g_star) * allocate_mins,
       max(y$mp_g)
     )
-    z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
+    z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
   }
   
   x[[length(x)+1]] <- z
@@ -409,14 +420,15 @@ z <- data.frame(
 r$best_rating <- z[match(r$team, z$team),2]
 
 ### full team, best rotation rating
-z <- as.data.frame(aggregate(rating*mp_g_team ~ team, y, sum))
+z <- as.data.frame(aggregate(abs(mp_g_star - mp_g_team ) ~ team, x, sum))
 z <- data.frame(
   team = z[,1],
-  current_better_rating = z[,2] / 200
+  rotation_rating = z[,2]
 )
-r$rotation_rating <- z[match(r$team, z$team),2] - r$best_rating
+
+r$rotation_rating <- z[match(r$team, z$team),2]
 ecdf_fn <- ecdf(r$rotation_rating)
-r$rotation_rating <- ecdf_fn(r$rotation_rating)
+r$rotation_rating <- 1 - ecdf_fn(r$rotation_rating)
 
 ### simplify data
 r[,2:4] <- round(r[,2:4], 1)
