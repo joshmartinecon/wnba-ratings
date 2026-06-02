@@ -313,7 +313,7 @@ for(i in teams){
     allocate_mins <- sum(z$mp_g_team[rule] - max(y$mp_g))
     z$mp_g_team <- ifelse(
       !rule,
-      z$mp_g_team + z$mp_g / sum(z$mp_g_team) * allocate_mins,
+      z$mp_g_team + z$mp_g_team / sum(z$mp_g_team) * allocate_mins,
       max(y$mp_g)
     )
     z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
@@ -392,7 +392,7 @@ for(i in teams){
     allocate_mins <- sum(z$mp_g_star[rule] - max(y$mp_g))
     z$mp_g_star <- ifelse(
       !rule,
-      z$mp_g_star + z$mp_g / sum(z$mp_g_star) * allocate_mins,
+      z$mp_g_star + z$mp_g_star / sum(z$mp_g_star) * allocate_mins,
       max(y$mp_g)
     )
     z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
