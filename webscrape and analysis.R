@@ -345,8 +345,12 @@ y$rating <- 60 + (asinh(y$score) - min(asinh(y$score)))/
 z <- data.frame(
   mp = y$mp_g,
   rtg = y$rating
-  # rtg2 = y$rating^2
 )
+# z <- data.frame(
+#   mp = y$mp_g,
+#   rtg = y$rating,
+#   rtg2 = y$rating^2
+# )
 lm1 <- lm(mp ~ rtg, z)
 y$mp_g_star <- predict(lm1)
 par(mar = c(4.5, 4.5, 1, 1))
@@ -354,6 +358,7 @@ plot(y$rating, y$mp_g,
      xlab = "Rating", ylab = "Minutes per Game")
 z <- z[order(-z$rtg),]
 lines(z$rtg, predict(lm(mp ~ rtg, z)), lwd = 4)
+# lines(z$rtg, predict(lm(mp ~ rtg + rtg2, z)), lwd = 4)
 
 ## expected minutes
 teams <- unique(y$team)
