@@ -300,10 +300,10 @@ x <- list()
 for(i in teams){
   
   z <- y[y$team == i,]
+  z <- z[z$mp_g > 4,]
   z <- z[order(-z$mp, -z$mp_g, -z$g),]
   
   z1 <- z[z$player %in% w$Name,]
-  z1 <- z1[z1$mp_g >= 10,]
   z2 <- z[z$player %ni% w$Name,]
   
   z <- z2[1:ifelse(nrow(z2) > 8, 8, nrow(z2)),]
@@ -344,21 +344,22 @@ y$rating <- 60 + (asinh(y$score) - min(asinh(y$score)))/
 ### full squad playing time
 z <- data.frame(
   mp = y$mp_g,
-  rtg = y$rating
+  rtg = y$rating,
+  rtg2 = y$rating^2
 )
-# z <- data.frame(
-#   mp = y$mp_g,
-#   rtg = y$rating,
-#   rtg2 = y$rating^2
-# )
 lm1 <- lm(mp ~ rtg, z)
-y$mp_g_star <- predict(lm1)
-par(mar = c(4.5, 4.5, 1, 1))
-plot(y$rating, y$mp_g,
-     xlab = "Rating", ylab = "Minutes per Game")
-z <- z[order(-z$rtg),]
-lines(z$rtg, predict(lm(mp ~ rtg, z)), lwd = 4)
-# lines(z$rtg, predict(lm(mp ~ rtg + rtg2, z)), lwd = 4)
+lm2 <- lm(mp ~ rtg + rtg2, z)
+y$mp_g_star <- ifelse(y$rating > median(y$rating), predict(lm2), predict(lm1))
+a <- y[order(y$rating),]
+a$median <- 0
+for(i in 1:nrow(a)){
+  a$median[i] <- ifelse(a$rating[i] > median(a$rating), 1, 0)
+}
+a$row <- 1:nrow(a)
+num <- min(a$row[a$median == 1])
+diff <- (a$mp_g_star[num-1] - a$mp_g_star[num])
+y$mp_g_star <- ifelse(y$rating > median(y$rating), y$mp_g_star + diff, y$mp_g_star)
+plot(y$rating, y$mp_g_star)
 
 ## expected minutes
 teams <- unique(y$team)
