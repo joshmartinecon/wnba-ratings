@@ -342,6 +342,7 @@ y$rating <- 60 + (asinh(y$score) - min(asinh(y$score)))/
                     (max(asinh(y$score)) - min(asinh(y$score))) * (99-60)
 
 ### full squad playing time
+y <- y[order(-y$rating),]
 z <- data.frame(
   mp = y$mp_g,
   rtg = y$rating,
@@ -349,17 +350,20 @@ z <- data.frame(
 )
 lm1 <- lm(mp ~ rtg, z)
 lm2 <- lm(mp ~ rtg + rtg2, z)
-y$mp_g_star <- ifelse(y$rating > median(y$rating), predict(lm2), predict(lm1))
-a <- y[order(y$rating),]
-a$median <- 0
-for(i in 1:nrow(a)){
-  a$median[i] <- ifelse(a$rating[i] > median(a$rating), 1, 0)
-}
-a$row <- 1:nrow(a)
-num <- min(a$row[a$median == 1])
-diff <- (a$mp_g_star[num-1] - a$mp_g_star[num])
-y$mp_g_star <- ifelse(y$rating > median(y$rating), y$mp_g_star + diff, y$mp_g_star)
-plot(y$rating, y$mp_g_star)
+z$lm1 <- predict(lm1)
+z$lm2 <- predict(lm2)
+plot(z$rtg, z$mp)
+lines(z$rtg, z$lm1, lwd = 4)
+lines(z$rtg, z$lm2, lwd = 4, lty = 2)
+
+# Quadratic coefficients: c2*x^2 + (c1 - b1)*x + (c0 - b0) = 0
+A <- lm2$coefficients["rtg2"]
+B <- lm2$coefficients["rtg"] - lm1$coefficients["rtg"]
+C <- lm2$coefficients["(Intercept)"] - lm1$coefficients["(Intercept)"]
+roots <- Re(polyroot(c(C, B, A)))
+y$mp_g_star <- ifelse(y$rating < max(roots), predict(lm1), predict(lm2))
+plot(y$rating, y$mp_g)
+lines(y$rating, y$mp_g_star, lwd = 4)
 
 ## expected minutes
 teams <- unique(y$team)
