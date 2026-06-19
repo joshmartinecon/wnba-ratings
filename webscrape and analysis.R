@@ -135,8 +135,8 @@ x <- data.frame(
 )
 y <- rbind(x, y)
 
-ot2 <- unique(paste(y$team, y$date)[as.numeric(y$mp) > 45])
-ot <- unique(paste(y$team, y$date)[as.numeric(y$mp) > 40])
+ot2 <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 45])
+ot <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 40])
 ot <- ot[ot %ni% ot2]
 if(length(ot) > 0 | length(ot2) > 0){
   y$mp[paste(y$team, y$date) %in% ot] <- round(y$mp[paste(y$team, y$date) %in% ot] * (40/45))
@@ -279,20 +279,11 @@ y$mp_g <- x$mp_g[match(paste(y$player, y$team),
 ##### step 6: scale playing time by team #####
 
 ### web scrape injuries
-w <- read_html("https://www.espn.com/wnba/injuries") %>%
-  html_elements("tbody tr") %>%
-  lapply(function(row) {
-    cols <- row %>% html_elements("td")
-    data.frame(
-      Name = cols[1] %>% html_element("a") %>% html_text(),
-      POS = cols[2] %>% html_text(),
-      ReturnDate = cols[3] %>% html_text(),
-      Status = cols[4] %>% html_element("span") %>% html_text(),
-      Comment = cols[5] %>% html_text(),
-      stringsAsFactors = FALSE
-    )
-  }) %>%
-  bind_rows()
+
+w <- read_html("https://www.vegasinsider.com/wnba/injuries/") %>%
+  html_table()
+w <- as.data.frame(do.call(rbind, w))
+w$name <- as.data.frame(do.call(rbind, strsplit(w$Player, " \\(")))$V1
 
 ### scale minutes by team
 teams <- unique(y$team)
@@ -303,8 +294,8 @@ for(i in teams){
   z <- z[z$mp_g > 4,]
   z <- z[order(-z$mp, -z$mp_g, -z$g),]
   
-  z1 <- z[z$player %in% w$Name,]
-  z2 <- z[z$player %ni% w$Name,]
+  z1 <- z[z$player %in% w$name,]
+  z2 <- z[z$player %ni% w$name,]
   
   z <- z2[1:ifelse(nrow(z2) > 8, 8, nrow(z2)),]
   z$mp_g_team <- z$mp_g / sum(z$mp_g) * 200
