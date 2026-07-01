@@ -1,5 +1,6 @@
 
 library(rvest)
+library(stringr)
 
 ### web scrape box score links
 teams <- c("atl", "chi", "con", "dal", "gs", "ind", "lv", "la", "min", "ny", "phx", "por", "sea", "tor", "wsh")
