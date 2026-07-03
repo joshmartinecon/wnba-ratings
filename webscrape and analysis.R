@@ -163,44 +163,8 @@ x <- data.frame(
 )
 x$mp_g <- round(x$mp / x$g, 2)
 
-x[x$player == "JJ QuinerlyJ. Quinerly#11",1] <- "JJ Quinerly"
-x[x$player == "Teaira Mc",1] <- "Teaira McCowan"
-x[x$player == "Aari Mc",1] <- "Aari McDonald"
-x[x$player == "A'ja WilsonA. Wilson#22",1] <- "A'ja Wilson"
-x[x$player == "Kayla Mc",1] <- "Kayla McBride"
-x[x$player == "Megan Mc",1] <- "Megan McConnell"
-x$player[x$player == "Sarah Ashlee"] <- "Sarah Ashlee Barker"
-x$player[x$player == "Myisha Hines"] <- "Myisha Hines-Allen"
-x$player[x$player == "Olivia Nelson"] <- "Olivia Nelson-Ododa"
-x$player[x$player == "Te-Hina Paopao"] <- "Te-Hina PaoPao"
-x$player[x$player == "Janelle Salaun"] <- "Janelle Salaün"
-x$player[x$player == "Hailey Van"] <- "Hailey Van Lith"
-x$player[x$player == "Shatori Walker"] <- "Shatori Walker-Kimbrough"
-x$player[x$player == "Anastasiia Olairi"] <- "Anastasiia Kosu"
-x$player[x$player == "Laura Juskaite"] <- "Laura Juškaitė"
-x$player[x$player == "Noemie Brochant"] <- "Noémie Brochant"
-x$player[x$player == "Frieda Buhner"] <- "Frieda Bühner"
-x$player[x$player == "Raquel Carrera"] <- "Raquel Carrera Quintana"
-x$player[x$player == "Emma Cechova"] <- "Emma Čechová"
-x$player[x$player == "Angela Dugalic"] <- "Angela Dugalić"
-x$player[x$player == "Luisa Geiselsoder"] <- "Luisa Geiselsöder"
-x$player[x$player == "Eliska Hamzova"] <- "Eliška Hamzová"
-x$player[x$player == "Flau'jae JohnsonF. Johnson#4"] <- "Flau'jae Johnson"
-x$player[x$player == "Sika Kone"] <- "Sika Koné"
-x$player[x$player == "Betnijah Laney"] <- "Betnijah Laney-Hamilton"
-x$player[x$player == "Charlisse Leger"] <- "Charlisse Leger-Walker"
-x$player[x$player == "Cotie Mc"] <- "Cotie McMahon"
-x$player[x$player == "Jovana Nogic"] <- "Jovana Nogić"
-x$player[x$player == "Cheyenne Parker"] <- "Cheyenne Parker-Tyus"
-x$player[x$player == "Katie Lou"] <- "Katie Lou Samuelson"
-x$player[x$player == "Marta Suarez"] <- "Marta Suárez"
-x$player[x$player == "Alex Wilson"] <- "Ally Wilson"
-x$player[x$player == "Grace Van"] <- "Grace VanSlooten"
-x$player[x$player == "Juste Jocyte"] <- "Justė Jocytė"
-x$player[x$player == "Monique Akoa"] <- "Monique Akoa Makani"
-x$player[x$player == "Alicia Florez"] <- "Alicia Flórez"
-x$player[x$player == "Leila Lacan"] <- "Leïla Lacan"
-
+z <- read.csv("name_crosswalk.csv")
+x$player <- ifelse(x$player %in% z$espn, z$bbref[match(x$player, z$espn)], x$player)
 x$team <- ifelse(x$team == "CONN", "CON",
                  ifelse(x$team == "GS", "GSV",
                         ifelse(x$team == "LA", "LAS",
@@ -292,6 +256,14 @@ w <- read_html("https://www.vegasinsider.com/wnba/injuries/") %>%
 w <- as.data.frame(do.call(rbind, w))
 w$name <- as.data.frame(do.call(rbind, strsplit(w$Player, " \\(")))$V1
 
+z <- read_html("https://www.espn.com/wnba/injuries") %>%
+  html_table()
+z <- as.data.frame(do.call(rbind, z))
+w <- unique(c(w$name, z$NAME))
+
+z <- read.csv("name_crosswalk.csv")
+w <- unique(ifelse(w %in% z$espn, z$bbref[match(w, z$espn)], w))
+
 ### scale minutes by team
 teams <- unique(y$team)
 x <- list()
@@ -301,8 +273,8 @@ for(i in teams){
   z <- z[z$mp_g > 4,]
   z <- z[order(-z$mp, -z$mp_g, -z$g),]
   
-  z1 <- z[z$player %in% w$name,]
-  z2 <- z[z$player %ni% w$name,]
+  z1 <- z[z$player %in% w,]
+  z2 <- z[z$player %ni% w,]
   
   z <- z2[1:ifelse(nrow(z2) > 8, 8, nrow(z2)),]
   z$mp_g_team <- z$mp_g / sum(z$mp_g) * 200
