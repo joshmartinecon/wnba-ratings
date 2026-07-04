@@ -220,24 +220,40 @@ a$gmsc <- a$product / a$mp
 y$gmsc <- a$gmsc[match(y$link, a$id)]
 
 ### keep players on their current rosters
-z <- list()
-for(i in 1:length(b)){
-  z[[length(z)+1]] <- data.frame(
-    id = read_html(paste0("https://www.basketball-reference.com", b[i])) %>%
-      html_element("#roster") %>%
-      html_elements("a") %>%
-      html_attr("href") %>%
-      gsub("^/wnba/players/", "", .) %>%
-      gsub(".html", "", .),
-    team = b[i] %>%
-      gsub("^/wnba/teams/", "", .) %>%
-      gsub("/2026.html$", "", .)
-  )
-  Sys.sleep(5)
-  cat(paste(i, "out of", length(b)), "\r")
-}
-z <- as.data.frame(do.call(rbind, z))
-y <- y[paste(y$link, y$team) %in% paste(z$id, z$team),]
+# z <- list()
+# for(i in 1:length(b)){
+#   z[[length(z)+1]] <- data.frame(
+#     id = read_html(paste0("https://www.basketball-reference.com", b[i])) %>%
+#       html_element("#roster") %>%
+#       html_elements("a") %>%
+#       html_attr("href") %>%
+#       gsub("^/wnba/players/", "", .) %>%
+#       gsub(".html", "", .),
+#     team = b[i] %>%
+#       gsub("^/wnba/teams/", "", .) %>%
+#       gsub("/2026.html$", "", .)
+#   )
+#   Sys.sleep(5)
+#   cat(paste(i, "out of", length(b)), "\r")
+# }
+# z <- as.data.frame(do.call(rbind, z))
+# y <- y[paste(y$player, y$team) %in% paste(x$player, z$team),]
+
+# Alyssa Thomas isn't being listed on the PHO roster online for some reason
+z <- read.csv("minutes played.csv")
+x <- aggregate(date ~ player, z, max)
+x$team <- z$team[match(paste(x$player, x$date), paste(z$player, z$date))]
+z <- read.csv("name_crosswalk.csv")
+x$player <- ifelse(x$player %in% z$espn, z$bbref[match(x$player, z$espn)], x$player)
+z <- data.frame(
+  team = c("GS", "LA", "LV", "NY", "PHX", "WSH"),
+  abr = c("GSV", "LAS", "LVA", "NYL", "PHO", "WAS")
+)
+x$team <- ifelse(x$team %in% z$team, z$abr[match(x$team, z$team)], x$team)
+y$team <- x$team[match(y$player, x$player)]
+y$g <- as.numeric(y$g)
+x <- aggregate(g ~ link, y, max)
+y <- y[paste(y$link, y$g) %in% paste(x$link, x$g),]
 
 ## convert variables to numbers
 y[,4:9] <- lapply(y[,4:9], as.numeric)
