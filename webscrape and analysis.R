@@ -224,7 +224,7 @@ y$gmsc <- a$gmsc[match(y$link, a$id)]
 # for(i in 1:length(b)){
 #   z[[length(z)+1]] <- data.frame(
 #     id = read_html(paste0("https://www.basketball-reference.com", b[i])) %>%
-#       html_element("#roster") %>%
+#       html_element("#per_game") %>%
 #       html_elements("a") %>%
 #       html_attr("href") %>%
 #       gsub("^/wnba/players/", "", .) %>%
@@ -237,7 +237,7 @@ y$gmsc <- a$gmsc[match(y$link, a$id)]
 #   cat(paste(i, "out of", length(b)), "\r")
 # }
 # z <- as.data.frame(do.call(rbind, z))
-# y <- y[paste(y$player, y$team) %in% paste(x$player, z$team),]
+# l <- z[!grepl("gamelog", z$id),]
 
 # Alyssa Thomas isn't being listed on the PHO roster online for some reason
 z <- read.csv("minutes played.csv")
@@ -250,10 +250,18 @@ z <- data.frame(
   abr = c("GSV", "LAS", "LVA", "NYL", "PHO", "WAS")
 )
 x$team <- ifelse(x$team %in% z$team, z$abr[match(x$team, z$team)], x$team)
-y$team <- x$team[match(y$player, x$player)]
-y$g <- as.numeric(y$g)
-x <- aggregate(g ~ link, y, max)
-y <- y[paste(y$link, y$g) %in% paste(x$link, x$g),]
+
+t <- list()
+traded_players <- unique(y$link[y$team == "TOT"])
+for(i in traded_players){
+  z <- y[y$link == i & y$team == "TOT",]
+  z$team <- x$team[match(z$player, x$player)]
+  t[[length(t)+1]] <- z
+}
+t <- as.data.frame(do.call(rbind, t))
+y <- rbind(y[y$link %ni% traded_players,], t)
+
+# y <- y[paste(y$link, y$team) %in% paste(l$id, l$team),]
 
 ## convert variables to numbers
 y[,4:9] <- lapply(y[,4:9], as.numeric)
