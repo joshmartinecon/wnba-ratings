@@ -220,48 +220,47 @@ a$gmsc <- a$product / a$mp
 y$gmsc <- a$gmsc[match(y$link, a$id)]
 
 ### keep players on their current rosters
-# z <- list()
-# for(i in 1:length(b)){
-#   z[[length(z)+1]] <- data.frame(
-#     id = read_html(paste0("https://www.basketball-reference.com", b[i])) %>%
-#       html_element("#per_game") %>%
-#       html_elements("a") %>%
-#       html_attr("href") %>%
-#       gsub("^/wnba/players/", "", .) %>%
-#       gsub(".html", "", .),
-#     team = b[i] %>%
-#       gsub("^/wnba/teams/", "", .) %>%
-#       gsub("/2026.html$", "", .)
-#   )
-#   Sys.sleep(5)
-#   cat(paste(i, "out of", length(b)), "\r")
-# }
-# z <- as.data.frame(do.call(rbind, z))
-# l <- z[!grepl("gamelog", z$id),]
+z <- list()
+for(i in 1:length(b)){
+  z[[length(z)+1]] <- data.frame(
+    id = read_html(paste0("https://www.basketball-reference.com", b[i])) %>%
+      html_element("#per_game") %>%
+      html_elements("a") %>%
+      html_attr("href") %>%
+      gsub("^/wnba/players/", "", .) %>%
+      gsub(".html", "", .),
+    team = b[i] %>%
+      gsub("^/wnba/teams/", "", .) %>%
+      gsub("/2026.html$", "", .)
+  )
+  Sys.sleep(5)
+  cat(paste(i, "out of", length(b)), "\r")
+}
+z <- as.data.frame(do.call(rbind, z))
+l <- z[!grepl("gamelog", z$id),]
+y <- y[paste(y$link, y$team) %in% paste(l$id, l$team),]
 
 # Alyssa Thomas isn't being listed on the PHO roster online for some reason
-z <- read.csv("minutes played.csv")
-x <- aggregate(date ~ player, z, max)
-x$team <- z$team[match(paste(x$player, x$date), paste(z$player, z$date))]
-z <- read.csv("name_crosswalk.csv")
-x$player <- ifelse(x$player %in% z$espn, z$bbref[match(x$player, z$espn)], x$player)
-z <- data.frame(
-  team = c("GS", "LA", "LV", "NY", "PHX", "WSH"),
-  abr = c("GSV", "LAS", "LVA", "NYL", "PHO", "WAS")
-)
-x$team <- ifelse(x$team %in% z$team, z$abr[match(x$team, z$team)], x$team)
-
-t <- list()
-traded_players <- unique(y$link[y$team == "TOT"])
-for(i in traded_players){
-  z <- y[y$link == i & y$team == "TOT",]
-  z$team <- x$team[match(z$player, x$player)]
-  t[[length(t)+1]] <- z
-}
-t <- as.data.frame(do.call(rbind, t))
-y <- rbind(y[y$link %ni% traded_players,], t)
-
-# y <- y[paste(y$link, y$team) %in% paste(l$id, l$team),]
+# z <- read.csv("minutes played.csv")
+# x <- aggregate(date ~ player, z, max)
+# x$team <- z$team[match(paste(x$player, x$date), paste(z$player, z$date))]
+# z <- read.csv("name_crosswalk.csv")
+# x$player <- ifelse(x$player %in% z$espn, z$bbref[match(x$player, z$espn)], x$player)
+# z <- data.frame(
+#   team = c("GS", "LA", "LV", "NY", "PHX", "WSH"),
+#   abr = c("GSV", "LAS", "LVA", "NYL", "PHO", "WAS")
+# )
+# x$team <- ifelse(x$team %in% z$team, z$abr[match(x$team, z$team)], x$team)
+# 
+# t <- list()
+# traded_players <- unique(y$link[y$team == "TOT"])
+# for(i in traded_players){
+#   z <- y[y$link == i & y$team == "TOT",]
+#   z$team <- x$team[match(z$player, x$player)]
+#   t[[length(t)+1]] <- z
+# }
+# t <- as.data.frame(do.call(rbind, t))
+# y <- rbind(y[y$link %ni% traded_players,], t)
 
 ## convert variables to numbers
 y[,4:9] <- lapply(y[,4:9], as.numeric)
@@ -325,6 +324,7 @@ for(i in teams){
 y <- as.data.frame(do.call(rbind, x))
 
 ### standardize playing-time weighted efficiency variables
+y$gmsc <- ifelse(is.na(y$gmsc), 0, y$gmsc)
 for(i in 6:9){
   y[,i] <- y[,i] * y$mp_g
   y[,i] <- (y[,i] - mean(y[,i])) / sd(y[,i])
