@@ -21,6 +21,8 @@ for(i in teams){
   z <- z[1:(last-1),]
   z <- z[grepl(", ", z$DATE),]
   
+  z <- z[!grepl("Postpone", z$RESULT),]
+  
   z$DATE %>%
     str_remove("^[A-Za-z]{3},\\s*") %>%       # Remove "Fri," etc.
     paste("2026") %>%                         # Add year
