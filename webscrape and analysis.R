@@ -288,6 +288,7 @@ z <- read.csv("name_crosswalk.csv")
 w <- unique(ifelse(w %in% z$espn, z$bbref[match(w, z$espn)], w))
 
 ### scale minutes by team
+y <- subset(y, !is.na(y$mp_g))
 teams <- unique(y$team)
 x <- list()
 for(i in teams){
