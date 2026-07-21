@@ -142,13 +142,15 @@ ot2 <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 45])
 ot2 <- ot2[ot2 %ni% ot3 & ot2 %ni% ot4]
 ot <- unique(paste(y$team, y$date)[as.numeric(y$mp) >= 40])
 ot <- ot[ot %ni% ot2 & ot %ni% ot3 & ot %ni% ot4]
-
 if(length(ot) > 0 | length(ot2) > 0 | length(ot3) > 0 | length(ot4) > 0){
   y$mp[paste(y$team, y$date) %in% ot]   <- round(y$mp[paste(y$team, y$date) %in% ot]   * (40/45))
   y$mp[paste(y$team, y$date) %in% ot2]  <- round(y$mp[paste(y$team, y$date) %in% ot2]  * (40/50))
   y$mp[paste(y$team, y$date) %in% ot3]  <- round(y$mp[paste(y$team, y$date) %in% ot3]  * (40/55))
   y$mp[paste(y$team, y$date) %in% ot4]  <- round(y$mp[paste(y$team, y$date) %in% ot4]  * (40/60))
 }
+
+y$mp <- ifelse(is.na(y$mp), 0, y$mp)
+
 write.csv(y, "minutes played.csv", row.names = FALSE)
 
 ##### step 4: minutes per game #####
