@@ -296,13 +296,14 @@ x <- list()
 for(i in teams){
   
   z <- y[y$team == i,]
-  z <- z[z$mp_g > 4,]
+  z <- z[z$mp_g > 9,]
   z <- z[order(-z$mp, -z$mp_g, -z$g),]
+  z <- z[1:ifelse(nrow(z) > 10, 10, nrow(z)),]
   
   z1 <- z[z$player %in% w,]
   z2 <- z[z$player %ni% w,]
   
-  z <- z2[1:ifelse(nrow(z2) > 8, 8, nrow(z2)),]
+  z <- z2
   z$mp_g_team <- z$mp_g / sum(z$mp_g) * 200
   
   while (any(z$mp_g_team > max(y$mp_g))) {
