@@ -155,25 +155,24 @@ write.csv(y, "minutes played.csv", row.names = FALSE)
 
 ##### step 4: minutes per game #####
 
-z <- as.data.frame(table(paste(y$player, y$team)))
-x <- aggregate(as.numeric(mp) ~ player + team, y, sum)
+z <- as.data.frame(table(y$player))
+x <- aggregate(as.numeric(mp) ~ player, y, sum)
 x <- data.frame(
   player = x[,1],
-  team = x[,2],
-  g = z$Freq[match(paste(x$player, x$team), z$Var1)],
-  mp = x[,3]
+  g = z$Freq[match(x$player, z$Var1)],
+  mp = x[,2]
 )
 x$mp_g <- round(x$mp / x$g, 2)
 
 z <- read.csv("name_crosswalk.csv")
 x$player <- ifelse(x$player %in% z$espn, z$bbref[match(x$player, z$espn)], x$player)
-x$team <- ifelse(x$team == "CONN", "CON",
-                 ifelse(x$team == "GS", "GSV",
-                        ifelse(x$team == "LA", "LAS",
-                               ifelse(x$team == "LV", "LVA",
-                                      ifelse(x$team == "NY", "NYL",
-                                             ifelse(x$team == "PHX", "PHO",
-                                                    ifelse(x$team == "WSH", "WAS", x$team)))))))
+# x$team <- ifelse(x$team == "CONN", "CON",
+#                  ifelse(x$team == "GS", "GSV",
+#                         ifelse(x$team == "LA", "LAS",
+#                                ifelse(x$team == "LV", "LVA",
+#                                       ifelse(x$team == "NY", "NYL",
+#                                              ifelse(x$team == "PHX", "PHO",
+#                                                     ifelse(x$team == "WSH", "WAS", x$team)))))))
 write.csv(x, "minutes played per.csv", row.names = F)
 
 ##### step 5: webscrape bbref #####
@@ -215,6 +214,12 @@ y <- data.frame(
   ws = y$WS.40
 )
 
+## keep only "total" (this handles in-season trades)
+z <- as.data.frame(table(y$player))
+z <- z[z$Freq > 1,]
+z <- y[y$player %in% z$Var1 & y$team == "TOT",]
+y <- rbind(y[y$player %ni% z$player,], z)
+
 ## match in game score
 gs$product <- as.numeric(gs$gmsc) * gs$mp
 a <- aggregate(cbind(product, mp) ~ player + id, gs, sum)
@@ -240,6 +245,8 @@ for(i in 1:length(b)){
 }
 z <- as.data.frame(do.call(rbind, z))
 l <- z[!grepl("gamelog", z$id),]
+
+y$team <- ifelse(y$team == "TOT", z$team[match(y$link, l$id)], y$team)
 y <- y[paste(y$link, y$team) %in% paste(l$id, l$team),]
 
 # Alyssa Thomas isn't being listed on the PHO roster online for some reason
@@ -269,8 +276,7 @@ y[,4:9] <- lapply(y[,4:9], as.numeric)
 
 ## supplement minutes played measure
 x <- read.csv("minutes played per.csv")
-y$mp_g <- x$mp_g[match(paste(y$player, y$team),
-                       paste(x$player, x$team))]
+y$mp_g <- x$mp_g[match(y$player, x$player)]
 
 ##### step 6: scale playing time by team #####
 
