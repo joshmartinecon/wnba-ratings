@@ -166,13 +166,6 @@ x$mp_g <- round(x$mp / x$g, 2)
 
 z <- read.csv("name_crosswalk.csv")
 x$player <- ifelse(x$player %in% z$espn, z$bbref[match(x$player, z$espn)], x$player)
-# x$team <- ifelse(x$team == "CONN", "CON",
-#                  ifelse(x$team == "GS", "GSV",
-#                         ifelse(x$team == "LA", "LAS",
-#                                ifelse(x$team == "LV", "LVA",
-#                                       ifelse(x$team == "NY", "NYL",
-#                                              ifelse(x$team == "PHX", "PHO",
-#                                                     ifelse(x$team == "WSH", "WAS", x$team)))))))
 write.csv(x, "minutes played per.csv", row.names = F)
 
 ##### step 5: webscrape bbref #####
@@ -227,49 +220,40 @@ a$gmsc <- a$product / a$mp
 y$gmsc <- a$gmsc[match(y$link, a$id)]
 
 ### keep players on their current rosters
-z <- list()
-for(i in 1:length(b)){
-  z[[length(z)+1]] <- data.frame(
-    id = read_html(paste0("https://www.basketball-reference.com", b[i])) %>%
-      html_element("#per_game") %>%
-      html_elements("a") %>%
-      html_attr("href") %>%
-      gsub("^/wnba/players/", "", .) %>%
-      gsub(".html", "", .),
-    team = b[i] %>%
-      gsub("^/wnba/teams/", "", .) %>%
-      gsub("/2026.html$", "", .)
-  )
-  Sys.sleep(5)
-  cat(paste(i, "out of", length(b)), "\r")
-}
-z <- as.data.frame(do.call(rbind, z))
-l <- z[!grepl("gamelog", z$id),]
-
-y$team <- ifelse(y$team == "TOT", z$team[match(y$link, l$id)], y$team)
-y <- y[paste(y$link, y$team) %in% paste(l$id, l$team),]
-
-# Alyssa Thomas isn't being listed on the PHO roster online for some reason
-# z <- read.csv("minutes played.csv")
-# x <- aggregate(date ~ player, z, max)
-# x$team <- z$team[match(paste(x$player, x$date), paste(z$player, z$date))]
-# z <- read.csv("name_crosswalk.csv")
-# x$player <- ifelse(x$player %in% z$espn, z$bbref[match(x$player, z$espn)], x$player)
-# z <- data.frame(
-#   team = c("GS", "LA", "LV", "NY", "PHX", "WSH"),
-#   abr = c("GSV", "LAS", "LVA", "NYL", "PHO", "WAS")
-# )
-# x$team <- ifelse(x$team %in% z$team, z$abr[match(x$team, z$team)], x$team)
-# 
-# t <- list()
-# traded_players <- unique(y$link[y$team == "TOT"])
-# for(i in traded_players){
-#   z <- y[y$link == i & y$team == "TOT",]
-#   z$team <- x$team[match(z$player, x$player)]
-#   t[[length(t)+1]] <- z
+# z <- list()
+# for(i in 1:length(b)){
+#   z[[length(z)+1]] <- data.frame(
+#     id = read_html(paste0("https://www.basketball-reference.com", b[i])) %>%
+#       html_element("#per_game") %>%
+#       html_elements("a") %>%
+#       html_attr("href") %>%
+#       gsub("^/wnba/players/", "", .) %>%
+#       gsub(".html", "", .),
+#     team = b[i] %>%
+#       gsub("^/wnba/teams/", "", .) %>%
+#       gsub("/2026.html$", "", .)
+#   )
+#   Sys.sleep(5)
+#   cat(paste(i, "out of", length(b)), "\r")
 # }
-# t <- as.data.frame(do.call(rbind, t))
-# y <- rbind(y[y$link %ni% traded_players,], t)
+# z <- as.data.frame(do.call(rbind, z))
+# l <- z[!grepl("gamelog", z$id),]
+
+mp <- read.csv("minutes played.csv")
+mp$team <- ifelse(mp$team == "CONN", "CON",
+                 ifelse(mp$team == "GS", "GSV",
+                        ifelse(mp$team == "LA", "LAS",
+                               ifelse(mp$team == "LV", "LVA",
+                                      ifelse(mp$team == "NY", "NYL",
+                                             ifelse(mp$team == "PHX", "PHO",
+                                                    ifelse(mp$team == "WSH", "WAS", mp$team)))))))
+m <- aggregate(date ~ player, mp, max)
+m$team <- mp$team[match(paste(m$player, m$date),
+                        paste(mp$player, mp$date))]
+z <- read.csv("name_crosswalk.csv")
+m$player <- ifelse(m$player %in% z$espn, z$bbref[match(m$player, z$espn)], m$player)
+y$team <- ifelse(y$team == "TOT", m$team[match(y$player, m$player)], y$team)
+y <- y[paste(y$player, y$team) %in% paste(m$player, m$team),]
 
 ## convert variables to numbers
 y[,4:9] <- lapply(y[,4:9], as.numeric)
