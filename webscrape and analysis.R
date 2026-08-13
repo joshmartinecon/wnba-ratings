@@ -296,15 +296,19 @@ for(i in teams){
   z <- z2
   z$mp_g_team <- z$mp_g / sum(z$mp_g) * 200
   
-  while (any(z$mp_g_team > max(y$mp_g))) {
-    rule <- z$mp_g_team > max(y$mp_g)
-    allocate_mins <- sum(z$mp_g_team[rule] - max(y$mp_g))
-    z$mp_g_team <- ifelse(
-      !rule,
-      z$mp_g_team + z$mp_g_team / sum(z$mp_g_team) * allocate_mins,
-      max(y$mp_g)
-    )
-    z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
+  if(nrow(z) <= 5){
+    z$mp_g_team <- 40
+  }else{
+    while (any(z$mp_g_team > max(y$mp_g))) {
+      rule <- z$mp_g_team > max(y$mp_g)
+      allocate_mins <- sum(z$mp_g_team[rule] - max(y$mp_g))
+      z$mp_g_team <- ifelse(
+        !rule,
+        z$mp_g_team + z$mp_g_team / sum(z$mp_g_team) * allocate_mins,
+        max(y$mp_g)
+      )
+      z$mp_g_team <- z$mp_g_team / sum(z$mp_g_team) * 200
+    }
   }
   
   if(nrow(z1) > 0){
@@ -387,15 +391,19 @@ for(i in teams){
   z <- z[z$mp_g_team > 0,]
   z$mp_g_star <- z$mp_g_star + z$mp_g_star / sum(z$mp_g_star) * (200 - sum(z$mp_g_star))
   
-  while (any(z$mp_g_star > max(y$mp_g))) {
-    rule <- z$mp_g_star > max(y$mp_g)
-    allocate_mins <- sum(z$mp_g_star[rule] - max(y$mp_g))
-    z$mp_g_star <- ifelse(
-      !rule,
-      z$mp_g_star + z$mp_g_star / sum(z$mp_g_star) * allocate_mins,
-      max(y$mp_g)
-    )
-    z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
+  if(nrow(z) <= 5){
+    z$mp_g_star <- 40
+  }else{
+    while (any(z$mp_g_star > max(y$mp_g))) {
+      rule <- z$mp_g_star > max(y$mp_g)
+      allocate_mins <- sum(z$mp_g_star[rule] - max(y$mp_g))
+      z$mp_g_star <- ifelse(
+        !rule,
+        z$mp_g_star + z$mp_g_star / sum(z$mp_g_star) * allocate_mins,
+        max(y$mp_g)
+      )
+      z$mp_g_star <- z$mp_g_star / sum(z$mp_g_star) * 200
+    }
   }
   
   x[[length(x)+1]] <- z
